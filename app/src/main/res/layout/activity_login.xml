@@ -31,7 +31,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/emailET"
+            android:id="@+id/loginET"
             android:inputType="text"
             android:hint="Имя пользователя"
             android:textSize="30sp"/>
