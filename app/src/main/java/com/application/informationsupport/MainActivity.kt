@@ -28,8 +28,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
-
         val adapter = ObjectListAdapter(this, testMap)
         val recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
@@ -43,15 +41,27 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        val admin = menu!!.findItem(R.id.action_admin)
+        if (intent.getStringExtra("role") == "0") admin.isVisible = false
+        return super.onPrepareOptionsMenu(menu)
+    }
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
+        if (id == R.id.action_admin) {
+            val newIntent = Intent(this, AdminActivity::class.java)
+            newIntent.putExtra("name", intent.getStringExtra("name"))
+            newIntent.putExtra("role", intent.getStringExtra("role"))
+            startActivity(newIntent)
+        }
         if (id == R.id.action_logout) {
             val intent = Intent(this, LoginActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
         }
-        if (id == R.id.action_profile) {
+        if (id == R.id.action_program) {
             val newIntent = Intent(this, ProfileActivity::class.java)
             newIntent.putExtra("name", intent.getStringExtra("name"))
             newIntent.putExtra("isOwnProfile", "y")
