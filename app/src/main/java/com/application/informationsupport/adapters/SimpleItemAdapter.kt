@@ -3,7 +3,6 @@ package com.application.informationsupport.adapters
 import android.app.Activity
 import android.content.Intent
 import android.database.SQLException
-import android.text.Editable
 import android.text.SpannableStringBuilder
 import android.util.Log
 import android.view.LayoutInflater
@@ -12,18 +11,18 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
-import com.application.informationsupport.AdminActivity
 import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
-import com.application.informationsupport.models.ModelServiceInfo
+import com.application.informationsupport.models.ModelSimpleInfo
 
-class ServiceItemAdapter(
+class SimpleItemAdapter(
     val context: Activity,
-    var objectList: List<ModelServiceInfo>,
-    val currentUser: String
+    var objectList: List<ModelSimpleInfo>,
+    val currentUser: String,
+    val currentType: String
 ) :
-    RecyclerView.Adapter<ServiceItemAdapter.ServiceItemHolder>() {
+    RecyclerView.Adapter<SimpleItemAdapter.ServiceItemHolder>() {
 
     class ServiceItemHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
@@ -32,7 +31,18 @@ class ServiceItemAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ServiceItemHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.row_service, parent, false)
+        var view = View(context)
+        when (currentType) {
+            "service" -> {
+                view = LayoutInflater.from(context).inflate(R.layout.row_service, parent, false)
+            }
+            "district" -> {
+                view = LayoutInflater.from(context).inflate(R.layout.row_district, parent, false)
+            }
+            "device" -> {
+                view = LayoutInflater.from(context).inflate(R.layout.row_device, parent, false)
+            }
+        }
         return ServiceItemHolder(view)
     }
 
@@ -62,13 +72,13 @@ class ServiceItemAdapter(
                     0 -> {
                         val intent = Intent(context, ObjectInfoActivity::class.java)
                         intent.putExtra("name", name)
-                        intent.putExtra("type", "service")
+                        intent.putExtra("type", currentType)
                         context.startActivity(intent)
                     }
 
                     1 -> {
                         val view = LayoutInflater.from(context)
-                            .inflate(R.layout.dialog_create_service, null)
+                            .inflate(R.layout.dialog_create_simple_info, null)
                         val nameET = view.findViewById<EditText>(R.id.nameET)
                         nameET.text = SpannableStringBuilder(holder.nameTV.text)
                         val button = view.findViewById<Button>(R.id.createServiceButton)
@@ -89,14 +99,26 @@ class ServiceItemAdapter(
                                     val creatorID = rs.getString("iduser")
                                     val stmt = connection.createStatement()
                                     stmt.executeQuery(
-                                        "update services set name = '${nameET.text}'," +
+                                        "update ${currentType}s set name = '${nameET.text}'," +
                                                 " changedby = '$creatorID'," +
                                                 " changeddate = SYSTIMESTAMP where name = '${holder.nameTV.text}'"
                                     )
-                                    Toast.makeText(context, "Служба изменена", Toast.LENGTH_SHORT)
+                                    var typeString = ""
+                                    when (currentType) {
+                                        "service" -> {
+                                            typeString = "Служба изменена"
+                                        }
+                                        "district" -> {
+                                            typeString = "Район изменён"
+                                        }
+                                        "device" -> {
+                                            typeString = "Устройство изменено"
+                                        }
+                                    }
+                                    Toast.makeText(context, typeString, Toast.LENGTH_SHORT)
                                         .show()
                                     connection.close()
-                                    refreshServices()
+                                    refreshSimpleInfo()
                                     ad.dismiss()
                                 } catch (e: SQLException) {
                                     Log.e("MyApp", e.toString())
@@ -104,7 +126,19 @@ class ServiceItemAdapter(
                                 }
                             }
                             else {
-                                Toast.makeText(context, "Недопустимое имя службы",
+                                var typeString = ""
+                                when (currentType) {
+                                    "service" -> {
+                                        typeString = "службы"
+                                    }
+                                    "district" -> {
+                                        typeString = "района"
+                                    }
+                                    "device" -> {
+                                        typeString = "устройства"
+                                    }
+                                }
+                                Toast.makeText(context, "Недопустимое имя $typeString",
                                     Toast.LENGTH_SHORT).show()
                             }
                         }
@@ -121,14 +155,26 @@ class ServiceItemAdapter(
                             val creatorID = rs.getString("iduser")
                             val stmt = connection.createStatement()
                             stmt.executeQuery(
-                                "update services set changedby = '$creatorID'," +
+                                "update ${currentType}s set changedby = '$creatorID'," +
                                         " changeddate = SYSTIMESTAMP, deleted = '1' where name =" +
                                         " '${holder.nameTV.text}'"
                             )
-                            Toast.makeText(context, "Служба изменена", Toast.LENGTH_SHORT)
+                            var typeString = ""
+                            when (currentType) {
+                                "service" -> {
+                                    typeString = "Служба удалена"
+                                }
+                                "district" -> {
+                                    typeString = "Район удалён"
+                                }
+                                "device" -> {
+                                    typeString = "Устройство удалено"
+                                }
+                            }
+                            Toast.makeText(context, typeString, Toast.LENGTH_SHORT)
                                 .show()
                             connection.close()
-                            refreshServices()
+                            refreshSimpleInfo()
                         } catch (e: SQLException) {
                             Log.e("MyApp", e.toString())
                             e.printStackTrace()
@@ -140,12 +186,12 @@ class ServiceItemAdapter(
         }
     }
 
-    fun refreshServices() {
-        val dataSet = mutableListOf<ModelServiceInfo>()
+    fun refreshSimpleInfo() {
+        val dataSet = mutableListOf<ModelSimpleInfo>()
         try {
             val connection = DatabaseConnector().createConnection()
             val stmt = connection.createStatement()
-            val rs = stmt.executeQuery("select * from services where deleted = '0'");
+            val rs = stmt.executeQuery("select * from ${currentType}s where deleted = '0'");
             while (rs.next()) {
                 val newStmt = connection.createStatement()
                 val nameSet = newStmt.executeQuery(
@@ -155,7 +201,7 @@ class ServiceItemAdapter(
                 nameSet.next()
                 val name = nameSet.getString("login")
                 dataSet.add(
-                    ModelServiceInfo(
+                    ModelSimpleInfo(
                         rs.getString("name"),
                         name,
                         rs.getTimestamp("creationdate").toString().split(".")[0]

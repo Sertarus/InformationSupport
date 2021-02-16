@@ -3,25 +3,30 @@ package com.application.informationsupport
 import android.database.SQLException
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.application.informationsupport.adapters.ServiceItemAdapter
+import com.application.informationsupport.adapters.SimpleItemAdapter
 import com.application.informationsupport.database.DatabaseConnector
-import com.application.informationsupport.models.ModelServiceInfo
+import com.application.informationsupport.models.ModelSimpleInfo
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class AdminActivity : AppCompatActivity() {
 
     private var currentData = ""
-    var serviceAdapter = ServiceItemAdapter(this, mutableListOf(),
-        "")
+    var serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
+        "", currentData)
+    lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,11 +36,11 @@ class AdminActivity : AppCompatActivity() {
         val chooseDatabaseTypeObjectButton =
             findViewById<FloatingActionButton>(R.id.floatingChooseButton)
         val addObjectButton = findViewById<FloatingActionButton>(R.id.floatingAddButton)
-        val recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
+        recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        serviceAdapter = ServiceItemAdapter(this, mutableListOf(),
-            intent.getStringExtra("name")!!)
+        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
+            intent.getStringExtra("name")!!, currentData)
         chooseDatabaseTypeObjectButton.setOnClickListener {
             val options = arrayOf(
                 "Пользователи",
@@ -52,8 +57,28 @@ class AdminActivity : AppCompatActivity() {
                 when (which) {
                     1 -> {
                         title = "Службы"
-                        currentData = "services"
-                        serviceAdapter.refreshServices()
+                        currentData = "service"
+                        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
+                            intent.getStringExtra("name")!!, currentData)
+                        serviceAdapter.refreshSimpleInfo()
+                        recyclerView.adapter = serviceAdapter
+                    }
+
+                    2-> {
+                        title = "Районы"
+                        currentData = "district"
+                        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
+                            intent.getStringExtra("name")!!, currentData)
+                        serviceAdapter.refreshSimpleInfo()
+                        recyclerView.adapter = serviceAdapter
+                    }
+
+                    3-> {
+                        title = "Устройства"
+                        currentData = "device"
+                        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
+                            intent.getStringExtra("name")!!, currentData)
+                        serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
                     }
                 }
@@ -62,11 +87,48 @@ class AdminActivity : AppCompatActivity() {
         }
 
         addObjectButton.setOnClickListener {
-            if (currentData == "services") {
-                createServiceDialog(recyclerView)
+            if (currentData == "service" || currentData == "district" || currentData == "device") {
+                createSimpleDialog()
             }
         }
 
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.menu_search, menu)
+        val item = menu!!.findItem(R.id.action_search)
+        val searchView = item.actionView as androidx.appcompat.widget.SearchView
+        searchView.setOnQueryTextListener(object :
+        androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                if (currentData != "") {
+                    if (!TextUtils.isEmpty(query!!.trim())) {
+                        searchItems(query)
+                    } else {
+                        if (currentData == "service" || currentData == "district" || currentData == "device") {
+                            serviceAdapter.refreshSimpleInfo()
+                        }
+                    }
+                }
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                if (currentData != "") {
+                    if (!TextUtils.isEmpty(newText!!.trim())) {
+                        searchItems(newText)
+                    } else {
+                        if (currentData == "service" || currentData == "district" || currentData == "device") {
+                            serviceAdapter.refreshSimpleInfo()
+                        }
+                    }
+                }
+                return false
+            }
+
+        })
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -79,8 +141,57 @@ class AdminActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun createServiceDialog(recyclerView: RecyclerView) {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_create_service, null)
+    private fun searchItems(query: String) {
+        if (currentData == "service" || currentData == "district" || currentData == "device") {
+            val dataSet = mutableListOf<ModelSimpleInfo>()
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val stmt = connection.createStatement()
+                val rs = stmt.executeQuery("select * from ${currentData}s where (name like '%$query%' or" +
+                        " createdby like '%$query%' or changedby like '%$query%' or" +
+                        " creationdate like '%$query%' or changeddate like '%$query%') and deleted = '0'")
+                while (rs.next()) {
+                    val newStmt = connection.createStatement()
+                    val nameSet = newStmt.executeQuery(
+                        "select login from users where iduser = '" +
+                                rs.getString("createdby") + "'"
+                    )
+                    nameSet.next()
+                    val name = nameSet.getString("login")
+                    dataSet.add(
+                        ModelSimpleInfo(
+                            rs.getString("name"),
+                            name,
+                            rs.getTimestamp("creationdate").toString().split(".")[0]
+                        )
+                    )
+                }
+                connection.close()
+            } catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            serviceAdapter = SimpleItemAdapter(this, dataSet, intent.getStringExtra("name")!!, currentData)
+            recyclerView.adapter = serviceAdapter
+        }
+    }
+
+    private fun createSimpleDialog() {
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_create_simple_info, null)
+        val addTV = view.findViewById<TextView>(R.id.addTV)
+        var typeString = ""
+        when (currentData) {
+            "service" -> {
+                typeString = addTV.text.toString() + "службу"
+            }
+            "district" -> {
+                typeString = addTV.text.toString() + "район"
+            }
+            "device" -> {
+                typeString = addTV.text.toString() + "устройство"
+            }
+        }
+        addTV.text = typeString
         val nameET = view.findViewById<EditText>(R.id.nameET)
         val button = view.findViewById<Button>(R.id.createServiceButton)
         val builder = AlertDialog.Builder(this)
@@ -88,7 +199,7 @@ class AdminActivity : AppCompatActivity() {
         val ad = builder.create()
         ad.show()
         button.setOnClickListener {
-            if (currentData != "") {
+            if (currentData == "service" || currentData == "district" || currentData == "device") {
                 val name = nameET.text.toString()
                 if (name.length in 1..40) {
                     try {
@@ -109,20 +220,32 @@ class AdminActivity : AppCompatActivity() {
                         val creatorID = creatorSet.getString("iduser")
                         val insertStmt = connection.createStatement()
                         insertStmt.executeQuery(
-                            "insert into services (name, createdby," +
+                            "insert into ${currentData}s (name, createdby," +
                                     " creationdate) values ('$name', '$creatorID', TO_TIMESTAMP('$timestamp'," +
                                     " 'YYYY-MM-DD HH24:MI:SS.FF'))"
                         )
                         Toast.makeText(this, "Служба добавлена", Toast.LENGTH_SHORT).show()
-                        serviceAdapter.refreshServices()
+                        serviceAdapter.refreshSimpleInfo()
                         ad.dismiss()
                     } catch (e: SQLException) {
                         Log.e("MyApp", e.toString())
                         e.printStackTrace()
                     }
                 } else {
+                    var secondTypeString = ""
+                    when (currentData) {
+                        "service" -> {
+                            secondTypeString = "службы"
+                        }
+                        "district" -> {
+                            secondTypeString = "района"
+                        }
+                        "device" -> {
+                            secondTypeString = "устройства"
+                        }
+                    }
                     Toast.makeText(
-                        this, "Недопустимое имя службы",
+                        this, "Недопустимое имя $secondTypeString",
                         Toast.LENGTH_SHORT
                     ).show()
                 }

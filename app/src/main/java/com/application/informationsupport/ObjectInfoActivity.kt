@@ -28,15 +28,32 @@ class ObjectInfoActivity : AppCompatActivity() {
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
         val dataSet = mutableListOf<ModelDataItem>()
-        if (intent.getStringExtra("type") == "service") {
-            informationTV.text = "Информация о службе:"
+        val type = intent.getStringExtra("type")
+        if (type == "service" || type == "district" || type == "device") {
+            var typeName = ""
+            when (type) {
+                "service" -> {
+                    informationTV.text = "Информация о службе:"
+                    typeName = "службы"
+                }
+
+                "district" -> {
+                    informationTV.text = "Информация о районе:"
+                    typeName = "района"
+                }
+
+                "device" -> {
+                    informationTV.text = "Информация об устройстве:"
+                    typeName = "устройства"
+                }
+            }
             objectIV.visibility = View.GONE
             try {
                 val connection = DatabaseConnector().createConnection()
                 val stmt = connection.createStatement()
-                val rs=stmt.executeQuery("select * from services where name = '${intent.getStringExtra("name")}'");
+                val rs=stmt.executeQuery("select * from ${type}s where name = '${intent.getStringExtra("name")}'");
                 rs.next()
-                dataSet.add(ModelDataItem("Название службы", rs.getString("name")))
+                dataSet.add(ModelDataItem("Название $typeName", rs.getString("name")))
                 val userNameStmt = connection.createStatement()
                 val userNameRS = userNameStmt.executeQuery("select login from users where iduser =" +
                         " '${rs.getString("createdBy")}'")
