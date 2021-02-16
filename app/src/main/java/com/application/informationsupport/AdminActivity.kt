@@ -20,15 +20,22 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 class AdminActivity : AppCompatActivity() {
 
     private var currentData = ""
+    var serviceAdapter = ServiceItemAdapter(this, mutableListOf(),
+        "")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         title = "Панель администратора"
-        val chooseDatabaseTypeObjectButton = findViewById<FloatingActionButton>(R.id.floatingChooseButton)
+        val chooseDatabaseTypeObjectButton =
+            findViewById<FloatingActionButton>(R.id.floatingChooseButton)
         val addObjectButton = findViewById<FloatingActionButton>(R.id.floatingAddButton)
         val recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
+        recyclerView.setHasFixedSize(true)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        serviceAdapter = ServiceItemAdapter(this, mutableListOf(),
+            intent.getStringExtra("name")!!)
         chooseDatabaseTypeObjectButton.setOnClickListener {
             val options = arrayOf(
                 "Пользователи",
@@ -44,7 +51,10 @@ class AdminActivity : AppCompatActivity() {
             builder.setItems(options) { _, which ->
                 when (which) {
                     1 -> {
-                        showServices(recyclerView)
+                        title = "Службы"
+                        currentData = "services"
+                        serviceAdapter.refreshServices()
+                        recyclerView.adapter = serviceAdapter
                     }
                 }
             }
@@ -69,37 +79,6 @@ class AdminActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun showServices(recyclerView: RecyclerView) {
-        currentData = "services"
-        val dataSet = mutableListOf<ModelServiceInfo>()
-        try {
-            val connection = DatabaseConnector().createConnection()
-            val stmt = connection.createStatement()
-            val rs=stmt.executeQuery("select * from services");
-            while (rs.next()) {
-                val newStmt = connection.createStatement()
-                val nameSet = newStmt.executeQuery("select login from users where iduser = '" +
-                        rs.getString("createdby") + "'")
-                nameSet.next()
-                val name = nameSet.getString("login")
-                dataSet.add(
-                    ModelServiceInfo(rs.getString("name"),
-                        name,
-                        rs.getTimestamp("creationdate").toString().split(".")[0]
-                    ))
-            }
-            connection.close();
-        }
-        catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
-        }
-        val adapter = ServiceItemAdapter(this, dataSet)
-        recyclerView.setHasFixedSize(true)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
-    }
-
     private fun createServiceDialog(recyclerView: RecyclerView) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_create_service, null)
         val nameET = view.findViewById<EditText>(R.id.nameET)
@@ -109,32 +88,44 @@ class AdminActivity : AppCompatActivity() {
         val ad = builder.create()
         ad.show()
         button.setOnClickListener {
-            val name = nameET.text.toString()
-            if (name.length in 1..40) {
-                try {
-                    val connection = DatabaseConnector().createConnection()
-                    val timeStmt = connection.createStatement()
-                    val timeSet = timeStmt.executeQuery("select TO_CHAR(SYSTIMESTAMP, 'YYYY-MM-DD HH24:MI:SS.FF') as mydate from dual")
-                    timeSet.next()
-                    val timestamp = timeSet.getString("mydate")
-                    val creatorIDStmt = connection.createStatement()
-                    val creatorSet = creatorIDStmt.executeQuery("select iduser from users where login = '" + intent.getStringExtra("name") + "'")
-                    creatorSet.next()
-                    val creatorID = creatorSet.getString("iduser")
-                    val insertStmt = connection.createStatement()
-                    insertStmt.executeQuery("insert into system.services (name, createdby, creationdate) values ('$name', '$creatorID', TO_TIMESTAMP('$timestamp', 'YYYY-MM-DD HH24:MI:SS.FF'))")
-                    Toast.makeText(this, "Служба добавлена", Toast.LENGTH_SHORT).show()
-                    ad.dismiss()
-                    showServices(recyclerView)
+            if (currentData != "") {
+                val name = nameET.text.toString()
+                if (name.length in 1..40) {
+                    try {
+                        val connection = DatabaseConnector().createConnection()
+                        val timeStmt = connection.createStatement()
+                        val timeSet = timeStmt.executeQuery(
+                            "select TO_CHAR(SYSTIMESTAMP," +
+                                    " 'YYYY-MM-DD HH24:MI:SS.FF') as mydate from dual"
+                        )
+                        timeSet.next()
+                        val timestamp = timeSet.getString("mydate")
+                        val creatorIDStmt = connection.createStatement()
+                        val creatorSet = creatorIDStmt.executeQuery(
+                            "select iduser from users where" +
+                                    " login = '" + intent.getStringExtra("name") + "'"
+                        )
+                        creatorSet.next()
+                        val creatorID = creatorSet.getString("iduser")
+                        val insertStmt = connection.createStatement()
+                        insertStmt.executeQuery(
+                            "insert into services (name, createdby," +
+                                    " creationdate) values ('$name', '$creatorID', TO_TIMESTAMP('$timestamp'," +
+                                    " 'YYYY-MM-DD HH24:MI:SS.FF'))"
+                        )
+                        Toast.makeText(this, "Служба добавлена", Toast.LENGTH_SHORT).show()
+                        serviceAdapter.refreshServices()
+                        ad.dismiss()
+                    } catch (e: SQLException) {
+                        Log.e("MyApp", e.toString())
+                        e.printStackTrace()
+                    }
+                } else {
+                    Toast.makeText(
+                        this, "Недопустимое имя службы",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
-                catch (e: SQLException) {
-                    Log.e("MyApp", e.toString())
-                    e.printStackTrace()
-                }
-            }
-            else {
-                Toast.makeText(this, "Недопустимое имя службы",
-                    Toast.LENGTH_SHORT).show()
             }
         }
     }
