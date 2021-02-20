@@ -51,7 +51,7 @@ class ObjectInfoActivity : AppCompatActivity() {
             try {
                 val connection = DatabaseConnector().createConnection()
                 val stmt = connection.createStatement()
-                val rs=stmt.executeQuery("select * from ${type}s where name = '${intent.getStringExtra("name")}'");
+                val rs=stmt.executeQuery("select * from ${type}s where name = '${intent.getStringExtra("name")}'")
                 rs.next()
                 dataSet.add(ModelDataItem("Название $typeName", rs.getString("name")))
                 val userNameStmt = connection.createStatement()
@@ -70,14 +70,82 @@ class ObjectInfoActivity : AppCompatActivity() {
                     dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
                     dataSet.add(ModelDataItem("Дата последнего изменения", rs.getString("changeddate").split(".")[0]))
                 }
-                connection.close();
+                connection.close()
             }
             catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
-            val adapter = DataItemAdapter(this, dataSet)
-            recyclerView.adapter = adapter
+            recyclerView.adapter = DataItemAdapter(this, dataSet)
+        }
+        if (type == "user") {
+            informationTV.text = "Информация о пользователе:"
+            objectIV.visibility = View.GONE
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val rs=connection.createStatement().executeQuery("select login, password," +
+                        " fullname, role, email, phonenumber, s.name as service," +
+                        " dis.name as district, dev.name as device, u.createdby, u.changedby," +
+                        " u.creationdate, u.changeddate, blocked from users u " +
+                        "join services s on s.idservice = u.service " +
+                        "join districts dis on dis.iddistrict = u.district " +
+                        "join devices dev on dev.iddevice = u.device " +
+                        "where login = '${intent.getStringExtra("name")}'")
+                rs.next()
+                dataSet.add(ModelDataItem("Логин", rs.getString("login")))
+                dataSet.add(ModelDataItem("Пароль", rs.getString("password")))
+                dataSet.add(ModelDataItem("ФИО", rs.getString("fullname")))
+                var roleName = ""
+                when (rs.getString("role")) {
+                    "0" -> {
+                        roleName = "Пользователь"
+                    }
+                    "1" -> {
+                        roleName = "Локальный администратор"
+                    }
+                    "2" -> {
+                        roleName = "Администратор"
+                    }
+                }
+                dataSet.add(ModelDataItem("Роль", roleName))
+                dataSet.add(ModelDataItem("Электронная почта", rs.getString("email")))
+                dataSet.add(ModelDataItem("Номер телефона", rs.getString("phonenumber")))
+                dataSet.add(ModelDataItem("Служба", rs.getString("service")))
+                dataSet.add(ModelDataItem("Район", rs.getString("district")))
+                dataSet.add(ModelDataItem("Привязанное устройство", rs.getString("device")))
+                val userNameStmt = connection.createStatement()
+                val userNameRS = userNameStmt.executeQuery("select login from users where iduser =" +
+                        " '${rs.getString("createdBy")}'")
+                userNameRS.next()
+                val createdUserName = userNameRS.getString("login")
+                dataSet.add(ModelDataItem("Создавший пользователь", createdUserName))
+                dataSet.add(ModelDataItem("Дата создания", rs.getString("creationdate").split(".")[0]))
+                if (rs.getString("changedby") != null && rs.getString("changeddate") != null) {
+                    val changedUserNameStmt = connection.createStatement()
+                    val changedUserNameRS = changedUserNameStmt.executeQuery("select login from users where iduser =" +
+                            " '${rs.getString("changedby")}'")
+                    changedUserNameRS.next()
+                    val changedUserName = changedUserNameRS.getString("login")
+                    dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
+                    dataSet.add(ModelDataItem("Дата последнего изменения", rs.getString("changeddate").split(".")[0]))
+                }
+                var blockedName = ""
+                when (rs.getString("blocked")) {
+                    "0" -> {
+                        blockedName = "Не заблокирован"
+                    }
+                    "1" -> {
+                        blockedName = "Заблокирован"
+                    }
+                }
+                dataSet.add(ModelDataItem("Статус блокировки", blockedName))
+                connection.close()
+            }
+            catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
     }
 

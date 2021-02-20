@@ -17,15 +17,21 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.adapters.SimpleItemAdapter
+import com.application.informationsupport.adapters.UserAdapter
 import com.application.informationsupport.database.DatabaseConnector
+import com.application.informationsupport.models.ModelMainUserInfo
 import com.application.informationsupport.models.ModelSimpleInfo
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.util.*
 
 class AdminActivity : AppCompatActivity() {
 
     private var currentData = ""
-    var serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
-        "", currentData)
+    var serviceAdapter = SimpleItemAdapter(
+        this, mutableListOf(),
+        "", currentData
+    )
+    var userAdapter = UserAdapter(this, mutableListOf(), "")
     lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,8 +45,10 @@ class AdminActivity : AppCompatActivity() {
         recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
-            intent.getStringExtra("name")!!, currentData)
+        serviceAdapter = SimpleItemAdapter(
+            this, mutableListOf(),
+            intent.getStringExtra("name")!!, currentData
+        )
         chooseDatabaseTypeObjectButton.setOnClickListener {
             val options = arrayOf(
                 "Пользователи",
@@ -55,29 +63,45 @@ class AdminActivity : AppCompatActivity() {
             builder.setTitle("Выберите необходимый тип данных")
             builder.setItems(options) { _, which ->
                 when (which) {
+
+                    0 -> {
+                        title = "Пользователи"
+                        currentData = "user"
+                        userAdapter =
+                            UserAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        userAdapter.refreshUserInfo()
+                        recyclerView.adapter = userAdapter
+                    }
+
                     1 -> {
                         title = "Службы"
                         currentData = "service"
-                        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
-                            intent.getStringExtra("name")!!, currentData)
+                        serviceAdapter = SimpleItemAdapter(
+                            this, mutableListOf(),
+                            intent.getStringExtra("name")!!, currentData
+                        )
                         serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
                     }
 
-                    2-> {
+                    2 -> {
                         title = "Районы"
                         currentData = "district"
-                        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
-                            intent.getStringExtra("name")!!, currentData)
+                        serviceAdapter = SimpleItemAdapter(
+                            this, mutableListOf(),
+                            intent.getStringExtra("name")!!, currentData
+                        )
                         serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
                     }
 
-                    3-> {
+                    3 -> {
                         title = "Устройства"
                         currentData = "device"
-                        serviceAdapter = SimpleItemAdapter(this, mutableListOf(),
-                            intent.getStringExtra("name")!!, currentData)
+                        serviceAdapter = SimpleItemAdapter(
+                            this, mutableListOf(),
+                            intent.getStringExtra("name")!!, currentData
+                        )
                         serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
                     }
@@ -90,6 +114,9 @@ class AdminActivity : AppCompatActivity() {
             if (currentData == "service" || currentData == "district" || currentData == "device") {
                 createSimpleDialog()
             }
+            if (currentData == "user") {
+                userAdapter.createOrEditUser("", false)
+            }
         }
 
     }
@@ -100,7 +127,7 @@ class AdminActivity : AppCompatActivity() {
         val item = menu!!.findItem(R.id.action_search)
         val searchView = item.actionView as androidx.appcompat.widget.SearchView
         searchView.setOnQueryTextListener(object :
-        androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (currentData != "") {
                     if (!TextUtils.isEmpty(query!!.trim())) {
@@ -108,6 +135,8 @@ class AdminActivity : AppCompatActivity() {
                     } else {
                         if (currentData == "service" || currentData == "district" || currentData == "device") {
                             serviceAdapter.refreshSimpleInfo()
+                        } else if (currentData == "user") {
+                            userAdapter.refreshUserInfo()
                         }
                     }
                 }
@@ -121,6 +150,8 @@ class AdminActivity : AppCompatActivity() {
                     } else {
                         if (currentData == "service" || currentData == "district" || currentData == "device") {
                             serviceAdapter.refreshSimpleInfo()
+                        } else if (currentData == "user") {
+                            userAdapter.refreshUserInfo()
                         }
                     }
                 }
@@ -147,9 +178,11 @@ class AdminActivity : AppCompatActivity() {
             try {
                 val connection = DatabaseConnector().createConnection()
                 val stmt = connection.createStatement()
-                val rs = stmt.executeQuery("select * from ${currentData}s where (name like '%$query%' or" +
-                        " createdby like '%$query%' or changedby like '%$query%' or" +
-                        " creationdate like '%$query%' or changeddate like '%$query%') and deleted = '0'")
+                val rs = stmt.executeQuery(
+                    "select * from ${currentData}s where (lower(name) like'%${query.toLowerCase(Locale.ROOT)}%' or" +
+                            " createdby like '%$query%' or changedby like '%$query%' or" +
+                            " creationdate like '%$query%' or changeddate like '%$query%') and deleted = '0'"
+                )
                 while (rs.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -171,13 +204,69 @@ class AdminActivity : AppCompatActivity() {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
-            serviceAdapter = SimpleItemAdapter(this, dataSet, intent.getStringExtra("name")!!, currentData)
+            serviceAdapter =
+                SimpleItemAdapter(this, dataSet, intent.getStringExtra("name")!!, currentData)
             recyclerView.adapter = serviceAdapter
+        }
+        if (currentData == "user") {
+            var roleQuery = "3"
+            if ("Пользователь".contains(query, true)) {
+                roleQuery = "0"
+            }
+            if ("Локальный".contains(query, true)) {
+                roleQuery = "1"
+            }
+            if ("Администратор".contains(query, true)) {
+                roleQuery = "2"
+            }
+            val dataSet = mutableListOf<ModelMainUserInfo>()
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val stmt = connection.createStatement()
+                val rs = stmt.executeQuery(
+                    "select login, fullname, role, email, phonenumber, s.name as service," +
+                            " dis.name as district, dev.name as device, u.createdby, u.creationdate," +
+                            " u.deleted from users u" +
+                            " join services s on s.idservice = u.service" +
+                            " join districts dis on dis.iddistrict = u.district" +
+                            " join devices dev on dev.iddevice = u.device" +
+                            " where (lower(login) like '%${query.toLowerCase(Locale.ROOT)}%' or" +
+                            " lower(fullname)  like '%${query.toLowerCase(Locale.ROOT)}%' or role like '%$roleQuery%' or" +
+                            " lower(email) like '%${query.toLowerCase(Locale.ROOT)}%' or phonenumber like '%$query%' or" +
+                            " lower(s.name) like '%${query.toLowerCase(Locale.ROOT)}%' or lower(dis.name) like '%${query.toLowerCase(Locale.ROOT)}%' or" +
+                            " lower(dev.name) like '%${query.toLowerCase(Locale.ROOT)}%') and u.deleted = '0'"
+                )
+                while (rs.next()) {
+                    val newStmt = connection.createStatement()
+                    val nameSet = newStmt.executeQuery(
+                        "select login from users where iduser = '" +
+                                rs.getString("createdby") + "'"
+                    )
+                    nameSet.next()
+                    val name = nameSet.getString("login")
+                    dataSet.add(
+                        ModelMainUserInfo(
+                            rs.getString("login"),
+                            rs.getString("fullname"),
+                            rs.getString("district"),
+                            rs.getString("service"),
+                            name,
+                            rs.getTimestamp("creationdate").toString().split(".")[0]
+                        )
+                    )
+                }
+                connection.close()
+            } catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            userAdapter = UserAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            recyclerView.adapter = userAdapter
         }
     }
 
     private fun createSimpleDialog() {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_create_simple_info, null)
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_create_edit_simple_info, null)
         val addTV = view.findViewById<TextView>(R.id.addTV)
         var typeString = ""
         when (currentData) {
@@ -226,6 +315,7 @@ class AdminActivity : AppCompatActivity() {
                         )
                         Toast.makeText(this, "Служба добавлена", Toast.LENGTH_SHORT).show()
                         serviceAdapter.refreshSimpleInfo()
+                        connection.close()
                         ad.dismiss()
                     } catch (e: SQLException) {
                         Log.e("MyApp", e.toString())

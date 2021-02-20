@@ -78,10 +78,20 @@ class SimpleItemAdapter(
 
                     1 -> {
                         val view = LayoutInflater.from(context)
-                            .inflate(R.layout.dialog_create_simple_info, null)
+                            .inflate(R.layout.dialog_create_edit_simple_info, null)
+                        val changeTV = view.findViewById<TextView>(R.id.addTV)
+                        var typeString = ""
+                        when (currentType) {
+                            "service" -> typeString = "службу"
+                            "district" -> typeString = "район"
+                            "device" -> typeString = "устройство"
+                        }
+                        typeString = "Изменить " + typeString
+                        changeTV.text = typeString
                         val nameET = view.findViewById<EditText>(R.id.nameET)
                         nameET.text = SpannableStringBuilder(holder.nameTV.text)
                         val button = view.findViewById<Button>(R.id.createServiceButton)
+                        button.text = "Изменить"
                         val changeBuilder = AlertDialog.Builder(context)
                         changeBuilder.setView(view)
                         val ad = changeBuilder.create()
@@ -190,11 +200,9 @@ class SimpleItemAdapter(
         val dataSet = mutableListOf<ModelSimpleInfo>()
         try {
             val connection = DatabaseConnector().createConnection()
-            val stmt = connection.createStatement()
-            val rs = stmt.executeQuery("select * from ${currentType}s where deleted = '0'");
+            val rs = connection.createStatement().executeQuery("select * from ${currentType}s where deleted = '0'")
             while (rs.next()) {
-                val newStmt = connection.createStatement()
-                val nameSet = newStmt.executeQuery(
+                val nameSet = connection.createStatement().executeQuery(
                     "select login from users where iduser = '" +
                             rs.getString("createdby") + "'"
                 )

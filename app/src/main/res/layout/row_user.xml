@@ -26,37 +26,69 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="5dp">
 
             <TextView
             android:id="@+id/loginTV"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Логин"
             android:textSize="18sp"
-            android:textColor="@color/black"
-            android:layout_gravity="center_horizontal"/>
+            android:textColor="@color/black" />
 
             <TextView
                 android:id="@+id/nameTV"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="ФИО"
                 android:textSize="18sp"
-                android:textColor="@color/black"
-                android:layout_gravity="center_horizontal"/>
+                android:textColor="@color/black"/>
+
+            <TextView
+                android:id="@+id/districtTV"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Район"
+                android:textSize="18sp"
+                android:textColor="@color/black"/>
         </LinearLayout>
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/creatorTV"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Служба"
-        android:textColor="@color/black"
-        android:gravity="end"
-        android:layout_gravity="center_vertical"
-        android:textSize="18sp"/>
+        android:orientation="vertical"
+        android:layout_gravity="end"
+        android:padding="5dp">
+
+        <TextView
+            android:id="@+id/serviceTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Служба"
+            android:textColor="@color/black"
+            android:gravity="end"
+            android:textSize="18sp"/>
+
+        <TextView
+            android:id="@+id/creatorTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Автор"
+            android:textColor="@color/black"
+            android:gravity="end"
+            android:textSize="18sp"/>
+
+        <TextView
+            android:id="@+id/createDateTV"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Дата добавления"
+            android:textColor="@color/black"
+            android:gravity="end"
+            android:textSize="18sp"/>
+    </LinearLayout>
 
 </androidx.cardview.widget.CardView>
