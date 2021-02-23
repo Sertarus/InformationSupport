@@ -22,15 +22,15 @@ class SimpleItemAdapter(
     val currentUser: String,
     val currentType: String
 ) :
-    RecyclerView.Adapter<SimpleItemAdapter.ServiceItemHolder>() {
+    RecyclerView.Adapter<SimpleItemAdapter.SimpleItemHolder>() {
 
-    class ServiceItemHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class SimpleItemHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
         var creatorTV: TextView = itemView.findViewById(R.id.creatorTV)
         var dateTV: TextView = itemView.findViewById(R.id.dateTV)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ServiceItemHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SimpleItemHolder {
         var view = View(context)
         when (currentType) {
             "service" -> {
@@ -43,14 +43,14 @@ class SimpleItemAdapter(
                 view = LayoutInflater.from(context).inflate(R.layout.row_device, parent, false)
             }
         }
-        return ServiceItemHolder(view)
+        return SimpleItemHolder(view)
     }
 
     override fun getItemCount(): Int {
         return objectList.size
     }
 
-    override fun onBindViewHolder(holder: ServiceItemHolder, position: Int) {
+    override fun onBindViewHolder(holder: SimpleItemHolder, position: Int) {
         val name = objectList[position].name
         val creator = objectList[position].creator
         val creationDate = objectList[position].creationDate
@@ -86,11 +86,11 @@ class SimpleItemAdapter(
                             "district" -> typeString = "район"
                             "device" -> typeString = "устройство"
                         }
-                        typeString = "Изменить " + typeString
+                        typeString = "Изменить $typeString"
                         changeTV.text = typeString
                         val nameET = view.findViewById<EditText>(R.id.nameET)
                         nameET.text = SpannableStringBuilder(holder.nameTV.text)
-                        val button = view.findViewById<Button>(R.id.createServiceButton)
+                        val button = view.findViewById<Button>(R.id.createSimpleInfoButton)
                         button.text = "Изменить"
                         val changeBuilder = AlertDialog.Builder(context)
                         changeBuilder.setView(view)
@@ -113,19 +113,19 @@ class SimpleItemAdapter(
                                                 " changedby = '$creatorID'," +
                                                 " changeddate = SYSTIMESTAMP where name = '${holder.nameTV.text}'"
                                     )
-                                    var typeString = ""
+                                    var changeTypeString = ""
                                     when (currentType) {
                                         "service" -> {
-                                            typeString = "Служба изменена"
+                                            changeTypeString = "Служба изменена"
                                         }
                                         "district" -> {
-                                            typeString = "Район изменён"
+                                            changeTypeString = "Район изменён"
                                         }
                                         "device" -> {
-                                            typeString = "Устройство изменено"
+                                            changeTypeString = "Устройство изменено"
                                         }
                                     }
-                                    Toast.makeText(context, typeString, Toast.LENGTH_SHORT)
+                                    Toast.makeText(context, changeTypeString, Toast.LENGTH_SHORT)
                                         .show()
                                     connection.close()
                                     refreshSimpleInfo()
@@ -136,19 +136,19 @@ class SimpleItemAdapter(
                                 }
                             }
                             else {
-                                var typeString = ""
+                                var genitiveTypeString = ""
                                 when (currentType) {
                                     "service" -> {
-                                        typeString = "службы"
+                                        genitiveTypeString = "службы"
                                     }
                                     "district" -> {
-                                        typeString = "района"
+                                        genitiveTypeString = "района"
                                     }
                                     "device" -> {
-                                        typeString = "устройства"
+                                        genitiveTypeString = "устройства"
                                     }
                                 }
-                                Toast.makeText(context, "Недопустимое имя $typeString",
+                                Toast.makeText(context, "Недопустимое имя $genitiveTypeString",
                                     Toast.LENGTH_SHORT).show()
                             }
                         }

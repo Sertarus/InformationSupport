@@ -297,9 +297,9 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
                     }
                     else {
                         var selectedRole = ""
-                        var selectedServiceID = ""
-                        var selectedDeviceID = ""
-                        var selectedDistrictID = ""
+                        var selectedServiceID: String
+                        var selectedDeviceID: String
+                        var selectedDistrictID: String
                         when (roleSpinner.selectedItem.toString()) {
                             "Пользователь" -> selectedRole = "0"
                             "Локальный администратор" -> selectedRole = "1"
@@ -327,8 +327,8 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
                         else {
                             blocked = "0"
                         }
-                        var stmt = ""
-                        var successStmt = ""
+                        var stmt: String
+                        var successStmt: String
                         if (isEdit) {
                             stmt = "update users set login = '${loginET.text}'," +
                                     " password = '${passwordET.text}'," +

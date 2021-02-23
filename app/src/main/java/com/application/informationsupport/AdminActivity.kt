@@ -16,9 +16,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.application.informationsupport.adapters.BranchAdapter
+import com.application.informationsupport.adapters.DataTypeAdapter
 import com.application.informationsupport.adapters.SimpleItemAdapter
 import com.application.informationsupport.adapters.UserAdapter
 import com.application.informationsupport.database.DatabaseConnector
+import com.application.informationsupport.models.ModelBranchInfo
 import com.application.informationsupport.models.ModelMainUserInfo
 import com.application.informationsupport.models.ModelSimpleInfo
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -32,6 +35,8 @@ class AdminActivity : AppCompatActivity() {
         "", currentData
     )
     var userAdapter = UserAdapter(this, mutableListOf(), "")
+    var datatypeAdapter = DataTypeAdapter(this, mutableListOf(), "")
+    var branchAdapter = BranchAdapter(this, mutableListOf(), "")
     lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +47,7 @@ class AdminActivity : AppCompatActivity() {
         val chooseDatabaseTypeObjectButton =
             findViewById<FloatingActionButton>(R.id.floatingChooseButton)
         val addObjectButton = findViewById<FloatingActionButton>(R.id.floatingAddButton)
-        recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
+        recyclerView = findViewById(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
         serviceAdapter = SimpleItemAdapter(
@@ -105,6 +110,20 @@ class AdminActivity : AppCompatActivity() {
                         serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
                     }
+                    4 -> {
+                        title = "Ветки"
+                        currentData = "branch"
+                        branchAdapter = BranchAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        branchAdapter.refreshBranches()
+                        recyclerView.adapter = branchAdapter
+                    }
+                    5 -> {
+                        title = "Формы"
+                        currentData = "datatype"
+                        datatypeAdapter = DataTypeAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        datatypeAdapter.refreshDataTypes()
+                        recyclerView.adapter = datatypeAdapter
+                    }
                 }
             }
             builder.create().show()
@@ -116,6 +135,12 @@ class AdminActivity : AppCompatActivity() {
             }
             if (currentData == "user") {
                 userAdapter.createOrEditUser("", false)
+            }
+            if (currentData == "datatype") {
+                datatypeAdapter.createOrEditDatatype("", false)
+            }
+            if (currentData == "branch") {
+                branchAdapter.createOrEditBranch("", false)
             }
         }
 
@@ -263,6 +288,66 @@ class AdminActivity : AppCompatActivity() {
             userAdapter = UserAdapter(this, dataSet, intent.getStringExtra("name")!!)
             recyclerView.adapter = userAdapter
         }
+        if (currentData == "datatype") {
+            val dataSet = mutableListOf<ModelSimpleInfo>()
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val rs = connection.createStatement().executeQuery("select * from datatypes where" +
+                        " name like '%$query%' and deleted = '0'")
+                while (rs.next()) {
+                    val newStmt = connection.createStatement()
+                    val nameSet = newStmt.executeQuery(
+                        "select login from users where iduser = '" +
+                                rs.getString("createdby") + "'"
+                    )
+                    nameSet.next()
+                    val name = nameSet.getString("login")
+                    dataSet.add(ModelSimpleInfo(rs.getString("name"), name,
+                        rs.getTimestamp("creationdate").toString().split(".")[0]))
+                }
+                connection.close()
+            }
+            catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            datatypeAdapter = DataTypeAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            recyclerView.adapter = datatypeAdapter
+        }
+        if (currentData == "branch") {
+            val dataSet = mutableListOf<ModelBranchInfo>()
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val rs = connection.createStatement().executeQuery("select * from branches where name like '%$query%' and deleted = '0'")
+                while (rs.next()) {
+                    val newStmt = connection.createStatement()
+                    val nameSet = newStmt.executeQuery(
+                        "select login from users where iduser = '" +
+                                rs.getString("createdby") + "'"
+                    )
+                    nameSet.next()
+                    val name = nameSet.getString("login")
+                    var higherBranchName = "-"
+                    if (rs.getString("higherbranch") != null){
+                        val higherBranchSet = connection.createStatement().executeQuery("select name from branches where idbranch = '${rs.getString("higherbranch")}'")
+                        if (higherBranchSet.next()) {
+                            higherBranchName = higherBranchSet.getString("name")
+                        }
+                    }
+                    val datatypeSet = connection.createStatement().executeQuery("select name from datatypes where iddatatype = '${rs.getString("datatype")}'")
+                    datatypeSet.next()
+                    val datatypeName = datatypeSet.getString("name")
+                    dataSet.add(ModelBranchInfo(rs.getString("name"), higherBranchName, datatypeName, name, rs.getString("creationDate").split(".")[0]))
+                }
+                connection.close()
+            }
+            catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            branchAdapter = BranchAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            recyclerView.adapter = branchAdapter
+        }
     }
 
     private fun createSimpleDialog() {
@@ -282,7 +367,7 @@ class AdminActivity : AppCompatActivity() {
         }
         addTV.text = typeString
         val nameET = view.findViewById<EditText>(R.id.nameET)
-        val button = view.findViewById<Button>(R.id.createServiceButton)
+        val button = view.findViewById<Button>(R.id.createSimpleInfoButton)
         val builder = AlertDialog.Builder(this)
         builder.setView(view)
         val ad = builder.create()

@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.R
 import com.application.informationsupport.models.ModelDataItem
 
-class DataItemAdapter (val context: Context, val itemList: MutableList<ModelDataItem>) :
+class DataItemAdapter (val context: Context, val itemList: List<ModelDataItem>) :
     RecyclerView.Adapter<DataItemAdapter.DataItemHolder>() {
 
     class DataItemHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
