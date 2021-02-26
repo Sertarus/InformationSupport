@@ -296,7 +296,7 @@ class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo
                     rs.next()
                     val creatorID = rs.getString("iduser")
                     if (isEdit) {
-                        connection.createStatement().executeQuery("update branches set name = '${nameET.text}', datatype = '$datatypeID', changedby = '$creatorID', changeddate = SYSTIMESTAMP")
+                        connection.createStatement().executeQuery("update branches set name = '${nameET.text}', datatype = '$datatypeID', changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenBranchName'")
                         Toast.makeText(context, "Ветка изменена", Toast.LENGTH_SHORT).show()
                         ad.dismiss()
                     }

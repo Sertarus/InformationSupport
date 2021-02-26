@@ -1,6 +1,8 @@
 package com.application.informationsupport
 
 import android.database.SQLException
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -21,11 +23,10 @@ class ObjectInfoActivity : AppCompatActivity() {
         setContentView(R.layout.activity_object_info)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         title = intent.getStringExtra("name")
-
         val informationTV = findViewById<TextView>(R.id.informationTV)
         val objectIV = findViewById<ImageView>(R.id.imageView)
+        objectIV.visibility = View.GONE
         val recyclerView = findViewById<RecyclerView>(R.id.dataItemRecyclerView)
-        recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
         val dataSet = mutableListOf<ModelDataItem>()
         val type = intent.getStringExtra("type")
@@ -47,7 +48,6 @@ class ObjectInfoActivity : AppCompatActivity() {
                     typeName = "устройства"
                 }
             }
-            objectIV.visibility = View.GONE
             try {
                 val connection = DatabaseConnector().createConnection()
                 val stmt = connection.createStatement()
@@ -95,7 +95,6 @@ class ObjectInfoActivity : AppCompatActivity() {
         }
         if (type == "user") {
             informationTV.text = "Информация о пользователе:"
-            objectIV.visibility = View.GONE
             try {
                 val connection = DatabaseConnector().createConnection()
                 val rs = connection.createStatement().executeQuery(
@@ -179,7 +178,6 @@ class ObjectInfoActivity : AppCompatActivity() {
         }
         if (type == "datatype") {
             informationTV.text = "Информация о форме:"
-            objectIV.visibility = View.GONE
             try {
                 val connection = DatabaseConnector().createConnection()
                 val datatypeRS = connection.createStatement().executeQuery(
@@ -240,7 +238,6 @@ class ObjectInfoActivity : AppCompatActivity() {
         }
         if (type == "branch") {
             informationTV.text = "Информация о ветке:"
-            objectIV.visibility = View.GONE
             try {
                 val connection = DatabaseConnector().createConnection()
                 val branchRS = connection.createStatement().executeQuery(
@@ -308,6 +305,81 @@ class ObjectInfoActivity : AppCompatActivity() {
                 connection.close()
             }
             catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            recyclerView.adapter = DataItemAdapter(this, dataSet)
+        }
+        if (type == "dataobject") {
+            informationTV.text = "Информация об объекте:"
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val dataObjectRS = connection.createStatement()
+                    .executeQuery("select * from dataobjects where name = '${intent.getStringExtra("name")}' and deleted = '0'")
+                dataObjectRS.next()
+                dataSet.add(ModelDataItem("Название", dataObjectRS.getString("name")))
+                val brachRS = connection.createStatement().executeQuery(
+                    "select name from branches where idbranch = '${dataObjectRS.getString("branch")}'"
+                )
+                brachRS.next()
+                val branchName = brachRS.getString("name")
+                dataSet.add(ModelDataItem("Располагается в ветке", branchName))
+                val image = dataObjectRS.getBlob("image")
+                if (image != null) {
+                    val bytes = image.getBytes(1L, image.length().toInt())
+                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    objectIV.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 250, 250, false))
+                    objectIV.visibility = View.VISIBLE
+                }
+                val userNameStmt = connection.createStatement()
+                val userNameRS = userNameStmt.executeQuery(
+                    "select login from users where iduser =" +
+                            " '${dataObjectRS.getString("createdBy")}'"
+                )
+                userNameRS.next()
+                val createdUserName = userNameRS.getString("login")
+                dataSet.add(ModelDataItem("Создавший пользователь", createdUserName))
+                dataSet.add(
+                    ModelDataItem(
+                        "Дата создания",
+                        dataObjectRS.getString("creationdate").split(".")[0]
+                    )
+                )
+                if (dataObjectRS.getString("changedby") != null && dataObjectRS.getString("changeddate") != null) {
+                    val changedUserNameStmt = connection.createStatement()
+                    val changedUserNameRS = changedUserNameStmt.executeQuery(
+                        "select login from users where iduser =" +
+                                " '${dataObjectRS.getString("changedby")}'"
+                    )
+                    changedUserNameRS.next()
+                    val changedUserName = changedUserNameRS.getString("login")
+                    dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
+                    dataSet.add(
+                        ModelDataItem(
+                            "Дата последнего изменения",
+                            dataObjectRS.getString("changeddate").split(".")[0]
+                        )
+                    )
+                }
+                dataSet.add(ModelDataItem("Форма объекта", ""))
+                val idDataTypeRS = connection.createStatement()
+                    .executeQuery("select datatype from branches where idBranch in (select branch from dataobjects where name = '${title}')")
+                idDataTypeRS.next()
+                val idDataType = idDataTypeRS.getString("datatype")
+                val idDataObjectRS = connection.createStatement()
+                    .executeQuery("select iddataobject from dataobjects where name = '$title'")
+                idDataObjectRS.next()
+                val idDataObject = idDataObjectRS.getString("iddataobject")
+                val recordTypesRS = connection.createStatement()
+                    .executeQuery("select recordtype, r.name, dataorder, dr.deleted from datatypes_recordtypes dr join recordtypes r on r.idrecordtype = dr.recordtype where datatype = '$idDataType' and dr.deleted = '0' order by dataorder")
+                while (recordTypesRS.next()) {
+                    val valueRS = connection.createStatement().executeQuery("select value from recordvalues where recordtype = '${recordTypesRS.getString("recordtype")}' and dataobject = '$idDataObject'")
+                    valueRS.next()
+                    dataSet.add(ModelDataItem(recordTypesRS.getString("name"), valueRS.getString("value")))
+                }
+                connection.close()
+            }
+            catch(e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }

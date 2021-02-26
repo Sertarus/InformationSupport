@@ -1,8 +1,14 @@
 package com.application.informationsupport
 
+import android.app.Activity
+import android.content.ContentValues
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.SQLException
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import android.view.LayoutInflater
@@ -14,20 +20,24 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.application.informationsupport.adapters.BranchAdapter
-import com.application.informationsupport.adapters.DataTypeAdapter
-import com.application.informationsupport.adapters.SimpleItemAdapter
-import com.application.informationsupport.adapters.UserAdapter
+import com.application.informationsupport.adapters.*
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelBranchInfo
+import com.application.informationsupport.models.ModelDataObject
 import com.application.informationsupport.models.ModelMainUserInfo
 import com.application.informationsupport.models.ModelSimpleInfo
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.util.*
 
 class AdminActivity : AppCompatActivity() {
+
+    val CAMERA_REQUEST_CODE = 100
+    val STORAGE_REQUEST_CODE = 200
+    val IMAGE_PICK_GALLERY_CODE = 300
+    val IMAGE_PICK_CAMERA_CODE = 400
 
     private var currentData = ""
     var serviceAdapter = SimpleItemAdapter(
@@ -37,6 +47,7 @@ class AdminActivity : AppCompatActivity() {
     var userAdapter = UserAdapter(this, mutableListOf(), "")
     var datatypeAdapter = DataTypeAdapter(this, mutableListOf(), "")
     var branchAdapter = BranchAdapter(this, mutableListOf(), "")
+    var dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), "")
     lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,16 +124,25 @@ class AdminActivity : AppCompatActivity() {
                     4 -> {
                         title = "Ветки"
                         currentData = "branch"
-                        branchAdapter = BranchAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        branchAdapter =
+                            BranchAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
                         branchAdapter.refreshBranches()
                         recyclerView.adapter = branchAdapter
                     }
                     5 -> {
                         title = "Формы"
                         currentData = "datatype"
-                        datatypeAdapter = DataTypeAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        datatypeAdapter =
+                            DataTypeAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
                         datatypeAdapter.refreshDataTypes()
                         recyclerView.adapter = datatypeAdapter
+                    }
+                    6 -> {
+                        title = "Объекты данных"
+                        currentData = "dataobject"
+                        dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        dataObjectAdapter.refreshDataObjects()
+                        recyclerView.adapter = dataObjectAdapter
                     }
                 }
             }
@@ -142,6 +162,9 @@ class AdminActivity : AppCompatActivity() {
             if (currentData == "branch") {
                 branchAdapter.createOrEditBranch("", false)
             }
+            if (currentData == "dataobject") {
+                dataObjectAdapter.createOrEditDataObject("", false)
+            }
         }
 
     }
@@ -158,11 +181,7 @@ class AdminActivity : AppCompatActivity() {
                     if (!TextUtils.isEmpty(query!!.trim())) {
                         searchItems(query)
                     } else {
-                        if (currentData == "service" || currentData == "district" || currentData == "device") {
-                            serviceAdapter.refreshSimpleInfo()
-                        } else if (currentData == "user") {
-                            userAdapter.refreshUserInfo()
-                        }
+                        searchItems("")
                     }
                 }
                 return false
@@ -173,11 +192,7 @@ class AdminActivity : AppCompatActivity() {
                     if (!TextUtils.isEmpty(newText!!.trim())) {
                         searchItems(newText)
                     } else {
-                        if (currentData == "service" || currentData == "district" || currentData == "device") {
-                            serviceAdapter.refreshSimpleInfo()
-                        } else if (currentData == "user") {
-                            userAdapter.refreshUserInfo()
-                        }
+                        searchItems("")
                     }
                 }
                 return false
@@ -204,7 +219,9 @@ class AdminActivity : AppCompatActivity() {
                 val connection = DatabaseConnector().createConnection()
                 val stmt = connection.createStatement()
                 val rs = stmt.executeQuery(
-                    "select * from ${currentData}s where (lower(name) like'%${query.toLowerCase(Locale.ROOT)}%' or" +
+                    "select * from ${currentData}s where (lower(name) like'%${query.toLowerCase(
+                        Locale.ROOT
+                    )}%' or" +
                             " createdby like '%$query%' or changedby like '%$query%' or" +
                             " creationdate like '%$query%' or changeddate like '%$query%') and deleted = '0'"
                 )
@@ -258,7 +275,9 @@ class AdminActivity : AppCompatActivity() {
                             " where (lower(login) like '%${query.toLowerCase(Locale.ROOT)}%' or" +
                             " lower(fullname)  like '%${query.toLowerCase(Locale.ROOT)}%' or role like '%$roleQuery%' or" +
                             " lower(email) like '%${query.toLowerCase(Locale.ROOT)}%' or phonenumber like '%$query%' or" +
-                            " lower(s.name) like '%${query.toLowerCase(Locale.ROOT)}%' or lower(dis.name) like '%${query.toLowerCase(Locale.ROOT)}%' or" +
+                            " lower(s.name) like '%${query.toLowerCase(Locale.ROOT)}%' or lower(dis.name) like '%${query.toLowerCase(
+                                Locale.ROOT
+                            )}%' or" +
                             " lower(dev.name) like '%${query.toLowerCase(Locale.ROOT)}%') and u.deleted = '0'"
                 )
                 while (rs.next()) {
@@ -292,8 +311,10 @@ class AdminActivity : AppCompatActivity() {
             val dataSet = mutableListOf<ModelSimpleInfo>()
             try {
                 val connection = DatabaseConnector().createConnection()
-                val rs = connection.createStatement().executeQuery("select * from datatypes where" +
-                        " name like '%$query%' and deleted = '0'")
+                val rs = connection.createStatement().executeQuery(
+                    "select * from datatypes where" +
+                            " name like '%$query%' and deleted = '0'"
+                )
                 while (rs.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -302,12 +323,15 @@ class AdminActivity : AppCompatActivity() {
                     )
                     nameSet.next()
                     val name = nameSet.getString("login")
-                    dataSet.add(ModelSimpleInfo(rs.getString("name"), name,
-                        rs.getTimestamp("creationdate").toString().split(".")[0]))
+                    dataSet.add(
+                        ModelSimpleInfo(
+                            rs.getString("name"), name,
+                            rs.getTimestamp("creationdate").toString().split(".")[0]
+                        )
+                    )
                 }
                 connection.close()
-            }
-            catch (e: SQLException) {
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
@@ -318,7 +342,8 @@ class AdminActivity : AppCompatActivity() {
             val dataSet = mutableListOf<ModelBranchInfo>()
             try {
                 val connection = DatabaseConnector().createConnection()
-                val rs = connection.createStatement().executeQuery("select * from branches where name like '%$query%' and deleted = '0'")
+                val rs = connection.createStatement()
+                    .executeQuery("select * from branches where name like '%$query%' and deleted = '0'")
                 while (rs.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -328,16 +353,55 @@ class AdminActivity : AppCompatActivity() {
                     nameSet.next()
                     val name = nameSet.getString("login")
                     var higherBranchName = "-"
-                    if (rs.getString("higherbranch") != null){
-                        val higherBranchSet = connection.createStatement().executeQuery("select name from branches where idbranch = '${rs.getString("higherbranch")}'")
+                    if (rs.getString("higherbranch") != null) {
+                        val higherBranchSet = connection.createStatement().executeQuery(
+                            "select name from branches where idbranch = '${rs.getString("higherbranch")}'"
+                        )
                         if (higherBranchSet.next()) {
                             higherBranchName = higherBranchSet.getString("name")
                         }
                     }
-                    val datatypeSet = connection.createStatement().executeQuery("select name from datatypes where iddatatype = '${rs.getString("datatype")}'")
+                    val datatypeSet = connection.createStatement().executeQuery(
+                        "select name from datatypes where iddatatype = '${rs.getString("datatype")}'"
+                    )
                     datatypeSet.next()
                     val datatypeName = datatypeSet.getString("name")
-                    dataSet.add(ModelBranchInfo(rs.getString("name"), higherBranchName, datatypeName, name, rs.getString("creationDate").split(".")[0]))
+                    dataSet.add(
+                        ModelBranchInfo(
+                            rs.getString("name"),
+                            higherBranchName,
+                            datatypeName,
+                            name,
+                            rs.getString("creationDate").split(".")[0]
+                        )
+                    )
+                }
+                connection.close()
+            } catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            branchAdapter = BranchAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            recyclerView.adapter = branchAdapter
+        }
+        if (currentData == "dataobject") {
+            val dataSet = mutableListOf<ModelDataObject>()
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val rs = connection.createStatement().executeQuery("select * from dataobjects where (name like '%$query%' or branch in (select idbranch from branches where  name like '%$query%')) and deleted = '0'")
+                while (rs.next()) {
+                    val newStmt = connection.createStatement()
+                    val nameSet = newStmt.executeQuery(
+                        "select login from users where iduser = '" +
+                                rs.getString("createdby") + "'"
+                    )
+                    nameSet.next()
+                    val name = nameSet.getString("login")
+                    val branchSet = connection.createStatement().executeQuery(
+                        "select name from branches where idbranch = '${rs.getString("branch")}' and deleted = '0'")
+                    branchSet.next()
+                    val branch = branchSet.getString("name")
+                    dataSet.add(ModelDataObject(rs.getString("name"), branch, name, rs.getString("creationdate").split(".")[0]))
                 }
                 connection.close()
             }
@@ -345,8 +409,8 @@ class AdminActivity : AppCompatActivity() {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
-            branchAdapter = BranchAdapter(this, dataSet, intent.getStringExtra("name")!!)
-            recyclerView.adapter = branchAdapter
+            dataObjectAdapter = DataObjectAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            recyclerView.adapter = dataObjectAdapter
         }
     }
 
@@ -427,4 +491,87 @@ class AdminActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == IMAGE_PICK_GALLERY_CODE) {
+                val imageUri = data!!.data!!
+                dataObjectAdapter.currentUri = imageUri
+                dataObjectAdapter.updateIV()
+            }
+            if (requestCode == IMAGE_PICK_CAMERA_CODE) {
+                dataObjectAdapter.updateIV()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            CAMERA_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty()) {
+                    val cameraAccepted = grantResults[0] == PackageManager.PERMISSION_GRANTED
+                    val writeStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED
+                    if (cameraAccepted && writeStorageAccepted) {
+                        pickFromCamera()
+                    } else {
+                        Toast.makeText(
+                            this,
+                            "Please enable camera and storage permission",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            STORAGE_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty()) {
+                    val writeStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED
+                    if (writeStorageAccepted) {
+                        pickFromGallery()
+                    } else {
+                        Toast.makeText(
+                            this,
+                            "Please enable storage permission",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun pickFromGallery() {
+        val galleryIntent = Intent(Intent.ACTION_PICK)
+        galleryIntent.type = "image/*"
+        ActivityCompat.startActivityForResult(
+            this,
+            galleryIntent,
+            IMAGE_PICK_GALLERY_CODE,
+            Bundle()
+        )
+    }
+
+    private fun pickFromCamera() {
+        val values = ContentValues()
+        values.put(MediaStore.Images.Media.TITLE, "Temp pic")
+        values.put(MediaStore.Images.Media.DESCRIPTION, "Temp description")
+        val imageUri =
+            this.contentResolver.insert(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                values
+            )!!
+        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
+        ActivityCompat.startActivityForResult(
+            this,
+            cameraIntent,
+            IMAGE_PICK_CAMERA_CODE,
+            Bundle()
+        )
+    }
+
 }
