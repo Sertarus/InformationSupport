@@ -18,9 +18,13 @@ import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelMainUserInfo
 import com.application.informationsupport.models.ModelUserInfo
 
-class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, val currentUser: String): RecyclerView.Adapter<UserAdapter.UserHolder>() {
+class UserAdapter(
+    val context: Activity,
+    var userList: List<ModelMainUserInfo>,
+    val currentUser: String
+) : RecyclerView.Adapter<UserAdapter.UserHolder>() {
 
-    class UserHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+    class UserHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var loginTV: TextView = itemView.findViewById(R.id.loginTV)
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
         var serviceTV: TextView = itemView.findViewById(R.id.serviceTV)
@@ -46,7 +50,7 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
         val creator = userList[position].creator
         val creationDate = userList[position].creationDate
 
-        holder.loginTV.text  = login
+        holder.loginTV.text = login
         holder.nameTV.text = fullName
         holder.districtTV.text = district
         holder.serviceTV.text = service
@@ -90,11 +94,11 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
                                             " changeddate = SYSTIMESTAMP, deleted = '1' where login =" +
                                             " '${holder.loginTV.text}'"
                                 )
-                                Toast.makeText(context, "Пользователь удалён", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Пользователь удалён", Toast.LENGTH_SHORT)
+                                    .show()
                                 connection.close()
                                 refreshUserInfo()
-                            }
-                            catch (e: SQLException) {
+                            } catch (e: SQLException) {
                                 Log.e("MyApp", e.toString())
                                 e.printStackTrace()
                             }
@@ -110,7 +114,8 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
         val dataSet = mutableListOf<ModelMainUserInfo>()
         try {
             val connection = DatabaseConnector().createConnection()
-            val rs = connection.createStatement().executeQuery("select * from users where deleted = '0'")
+            val rs =
+                connection.createStatement().executeQuery("select * from users where deleted = '0'")
             while (rs.next()) {
                 val newStmt = connection.createStatement()
                 val nameSet = newStmt.executeQuery(
@@ -131,13 +136,16 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
                 )
                 districtSet.next()
                 val district = districtSet.getString("name")
-                dataSet.add(ModelMainUserInfo(rs.getString("login"),
-                    rs.getString("fullname"), district, service,
-                    name, rs.getString("creationDate").split(".")[0]))
+                dataSet.add(
+                    ModelMainUserInfo(
+                        rs.getString("login"),
+                        rs.getString("fullname"), district, service,
+                        name, rs.getString("creationDate").split(".")[0]
+                    )
+                )
             }
             connection.close()
-        }
-        catch (e: SQLException) {
+        } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()
         }
@@ -162,10 +170,14 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
             changeTV.text = "Изменить пользователя"
             button.text = "Изменить"
         }
-        val roleData = arrayOf("Пользователь", "Локальный администратор",
-            "Администратор")
-        val roleAdapter = ArrayAdapter(context,
-            android.R.layout.simple_spinner_item, roleData)
+        val roleData = arrayOf(
+            "Пользователь", "Локальный администратор",
+            "Администратор"
+        )
+        val roleAdapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_spinner_item, roleData
+        )
         roleSpinner.adapter = roleAdapter
         val serviceData = mutableListOf<String>()
         val districtData = mutableListOf<String>()
@@ -214,38 +226,46 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
                 deviceData.add(currentDevice)
             }
             val serviceStmt = connection.createStatement()
-            val serviceRS = serviceStmt.executeQuery("select name from services where deleted = '0'")
+            val serviceRS =
+                serviceStmt.executeQuery("select name from services where deleted = '0'")
             while (serviceRS.next()) {
                 serviceData.add(serviceRS.getString("name"))
             }
             val districtStmt = connection.createStatement()
-            val districtRS = districtStmt.executeQuery("select name from districts where deleted = '0'")
+            val districtRS =
+                districtStmt.executeQuery("select name from districts where deleted = '0'")
             while (districtRS.next()) {
                 districtData.add(districtRS.getString("name"))
             }
             val deviceStmt = connection.createStatement()
-            val deviceRS = deviceStmt.executeQuery("select name from devices where iddevice not in (select device from users where deleted = '0')")
+            val deviceRS =
+                deviceStmt.executeQuery("select name from devices where iddevice not in (select device from users where deleted = '0')")
             while (deviceRS.next()) {
                 deviceData.add(deviceRS.getString("name"))
             }
             connection.close()
-        }
-        catch (e: SQLException) {
+        } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()
         }
 
         val serviceSpinner = view.findViewById<Spinner>(R.id.spinnerService)
-        val serviceAdapter = ArrayAdapter(context,
-            android.R.layout.simple_spinner_item, serviceData)
+        val serviceAdapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_spinner_item, serviceData
+        )
         serviceSpinner.adapter = serviceAdapter
         val districtSpinner = view.findViewById<Spinner>(R.id.spinnerDistrict)
-        val districtAdapter = ArrayAdapter(context,
-            android.R.layout.simple_spinner_item, districtData)
+        val districtAdapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_spinner_item, districtData
+        )
         districtSpinner.adapter = districtAdapter
         val deviceSpinner = view.findViewById<Spinner>(R.id.spinnerDevice)
-        val deviceAdapter = ArrayAdapter(context,
-            android.R.layout.simple_spinner_item, deviceData)
+        val deviceAdapter = ArrayAdapter(
+            context,
+            android.R.layout.simple_spinner_item, deviceData
+        )
         deviceSpinner.adapter = deviceAdapter
 
         val checkboxBlocked = view.findViewById<CheckBox>(R.id.checkBoxBlocked)
@@ -257,8 +277,7 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
             if (blocked == "1") {
                 checkboxBlocked.isChecked = true
             }
-        }
-        else {
+        } else {
             roleSpinner.prompt = "Роль пользователя"
             serviceSpinner.prompt = "Служба"
             districtSpinner.prompt = "Район"
@@ -269,101 +288,117 @@ class UserAdapter(val context: Activity, var userList: List<ModelMainUserInfo>, 
         val ad = changeBuilder.create()
         ad.show()
         button.setOnClickListener {
-            if (loginET.text.length !in 1..20) {
-                Toast.makeText(context, "Недопустимая длина логина", Toast.LENGTH_SHORT).show()
-            }
-            else if (passwordET.text.length !in 1..20) {
-                Toast.makeText(context, "Недопустимая длина пароля", Toast.LENGTH_SHORT).show()
-            }
-            else if (fullnameET.text.length !in 1..60) {
-                Toast.makeText(context, "Недопустимая длина ФИО", Toast.LENGTH_SHORT).show()
-            }
-            else if (emailET.text.length !in 1..20) {
-                Toast.makeText(context, "Недопустимая длина электронной почты", Toast.LENGTH_SHORT).show()
-            }
-            else if (phoneNumberET.text.length !in 1..16) {
-                Toast.makeText(context, "Недопустимая длина номера телефона", Toast.LENGTH_SHORT).show()
-            }
-            else {
-                try {
-                    val connection = DatabaseConnector().createConnection()
-                    val selectedDevice = deviceSpinner.selectedItem.toString()
-                    val usedDeviceRS = connection.createStatement().
-                    executeQuery("select device from users where device in" +
-                            " (select iddevice from devices where name = '$selectedDevice') and login != '$chosenUserLogin' and deleted = '0'")
-                    if (usedDeviceRS.next()) {
-                        Toast.makeText(context, "Выбранное устройство уже было привязано к другому сотруднику", Toast.LENGTH_SHORT).show()
-                        connection.close()
-                    }
-                    else {
-                        var selectedRole = ""
-                        var selectedServiceID: String
-                        var selectedDeviceID: String
-                        var selectedDistrictID: String
-                        when (roleSpinner.selectedItem.toString()) {
-                            "Пользователь" -> selectedRole = "0"
-                            "Локальный администратор" -> selectedRole = "1"
-                            "Администратор" -> selectedRole = "2"
-                        }
-                        val serviceIDRS = connection.createStatement().executeQuery("select idservice from services where name = '${serviceSpinner.selectedItem}'")
-                        serviceIDRS.next()
-                        selectedServiceID = serviceIDRS.getString("idservice")
-                        val districtIDRS = connection.createStatement().executeQuery("select iddistrict from districts where name = '${districtSpinner.selectedItem}'")
-                        districtIDRS.next()
-                        selectedDistrictID = districtIDRS.getString("iddistrict")
-                        val deviceIDRS = connection.createStatement().executeQuery("select iddevice from devices where name = '${deviceSpinner.selectedItem}'")
-                        deviceIDRS.next()
-                        selectedDeviceID = deviceIDRS.getString("iddevice")
-                        val idStmt = connection.createStatement()
-                        val rs = idStmt.executeQuery(
-                            "select iduser from users where" +
-                                    " login = '$currentUser'"
-                        )
-                        rs.next()
-                        val creatorID = rs.getString("iduser")
-                        if (checkboxBlocked.isChecked) {
-                            blocked = "1"
-                        }
-                        else {
-                            blocked = "0"
-                        }
-                        var stmt: String
-                        var successStmt: String
-                        if (isEdit) {
-                            stmt = "update users set login = '${loginET.text}'," +
-                                    " password = '${passwordET.text}'," +
-                                    " fullname = '${fullnameET.text}'," +
-                                    " email = '${emailET.text}'," +
-                                    " phonenumber = '${phoneNumberET.text}'," +
-                                    " role = '${selectedRole}'," +
-                                    " service = '$selectedServiceID'," +
-                                    " district = '$selectedDistrictID'," +
-                                    " device = '$selectedDeviceID'," +
-                                    " changedby = '$creatorID'," +
-                                    " changeddate = SYSTIMESTAMP, blocked = '$blocked' where login =" +
-                                    " '$chosenUserLogin'"
-                            successStmt = "Данные пользователя изменены"
-                        }
-                        else {
-                            stmt = "insert into users (login, password, fullname, role, email," +
-                                    " phonenumber, service, district, device, createdby," +
-                                    " creationdate, blocked) values ('${loginET.text}', '${passwordET.text}'," +
-                                    " '${fullnameET.text}', '$selectedRole', '${emailET.text}'," +
-                                    " '${phoneNumberET.text}', '$selectedServiceID', '$selectedDistrictID', '$selectedDeviceID', '$creatorID', SYSTIMESTAMP, '0')"
-                            successStmt = "Пользователь создан"
-                        }
-                        connection.createStatement().
-                        executeQuery(stmt)
-                        Toast.makeText(context, successStmt, Toast.LENGTH_SHORT).show()
-                        connection.close()
-                        refreshUserInfo()
-                        ad.dismiss()
-                    }
-
+            when {
+                loginET.text.length !in 1..20 -> {
+                    Toast.makeText(context, "Недопустимая длина логина", Toast.LENGTH_SHORT).show()
                 }
-                catch (e: SQLException) {
-                    Log.e("MyApp", e.toString())
-                    e.printStackTrace()
+                passwordET.text.length !in 1..20 -> {
+                    Toast.makeText(context, "Недопустимая длина пароля", Toast.LENGTH_SHORT).show()
+                }
+                fullnameET.text.length !in 1..60 -> {
+                    Toast.makeText(context, "Недопустимая длина ФИО", Toast.LENGTH_SHORT).show()
+                }
+                emailET.text.length !in 1..20 -> {
+                    Toast.makeText(context, "Недопустимая длина электронной почты", Toast.LENGTH_SHORT)
+                        .show()
+                }
+                phoneNumberET.text.length !in 1..16 -> {
+                    Toast.makeText(context, "Недопустимая длина номера телефона", Toast.LENGTH_SHORT)
+                        .show()
+                }
+                else -> {
+                    try {
+                        val connection = DatabaseConnector().createConnection()
+                        val ifUserExistRS = connection.createStatement()
+                            .executeQuery("select * from users where login = '${loginET.text}' and deleted = '0'")
+                        if (ifUserExistRS.next()) {
+                            Toast.makeText(
+                                context,
+                                "Пользователь с таким логином уже существует",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            val selectedDevice = deviceSpinner.selectedItem.toString()
+                            val usedDeviceRS = connection.createStatement().executeQuery(
+                                "select device from users where device in" +
+                                        " (select iddevice from devices where name = '$selectedDevice') and login != '$chosenUserLogin' and deleted = '0'"
+                            )
+                            if (usedDeviceRS.next()) {
+                                Toast.makeText(
+                                    context,
+                                    "Выбранное устройство уже было привязано к другому сотруднику",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } else {
+                                var selectedRole = ""
+                                val selectedServiceID: String
+                                val selectedDeviceID: String
+                                val selectedDistrictID: String
+                                when (roleSpinner.selectedItem.toString()) {
+                                    "Пользователь" -> selectedRole = "0"
+                                    "Локальный администратор" -> selectedRole = "1"
+                                    "Администратор" -> selectedRole = "2"
+                                }
+                                val serviceIDRS = connection.createStatement()
+                                    .executeQuery("select idservice from services where name = '${serviceSpinner.selectedItem}'")
+                                serviceIDRS.next()
+                                selectedServiceID = serviceIDRS.getString("idservice")
+                                val districtIDRS = connection.createStatement()
+                                    .executeQuery("select iddistrict from districts where name = '${districtSpinner.selectedItem}'")
+                                districtIDRS.next()
+                                selectedDistrictID = districtIDRS.getString("iddistrict")
+                                val deviceIDRS = connection.createStatement()
+                                    .executeQuery("select iddevice from devices where name = '${deviceSpinner.selectedItem}'")
+                                deviceIDRS.next()
+                                selectedDeviceID = deviceIDRS.getString("iddevice")
+                                val idStmt = connection.createStatement()
+                                val rs = idStmt.executeQuery(
+                                    "select iduser from users where" +
+                                            " login = '$currentUser'"
+                                )
+                                rs.next()
+                                val creatorID = rs.getString("iduser")
+                                blocked = if (checkboxBlocked.isChecked) {
+                                    "1"
+                                } else {
+                                    "0"
+                                }
+                                val stmt: String
+                                val successStmt: String
+                                if (isEdit) {
+                                    stmt = "update users set login = '${loginET.text}'," +
+                                            " password = '${passwordET.text}'," +
+                                            " fullname = '${fullnameET.text}'," +
+                                            " email = '${emailET.text}'," +
+                                            " phonenumber = '${phoneNumberET.text}'," +
+                                            " role = '${selectedRole}'," +
+                                            " service = '$selectedServiceID'," +
+                                            " district = '$selectedDistrictID'," +
+                                            " device = '$selectedDeviceID'," +
+                                            " changedby = '$creatorID'," +
+                                            " changeddate = SYSTIMESTAMP, blocked = '$blocked' where login =" +
+                                            " '$chosenUserLogin'"
+                                    successStmt = "Данные пользователя изменены"
+                                } else {
+                                    stmt =
+                                        "insert into users (login, password, fullname, role, email," +
+                                                " phonenumber, service, district, device, createdby," +
+                                                " creationdate, blocked) values ('${loginET.text}', '${passwordET.text}'," +
+                                                " '${fullnameET.text}', '$selectedRole', '${emailET.text}'," +
+                                                " '${phoneNumberET.text}', '$selectedServiceID', '$selectedDistrictID', '$selectedDeviceID', '$creatorID', SYSTIMESTAMP, '0')"
+                                    successStmt = "Пользователь создан"
+                                }
+                                connection.createStatement().executeQuery(stmt)
+                                Toast.makeText(context, successStmt, Toast.LENGTH_SHORT).show()
+                                refreshUserInfo()
+                                ad.dismiss()
+                            }
+                            connection.close()
+                        }
+                    } catch (e: SQLException) {
+                        Log.e("MyApp", e.toString())
+                        e.printStackTrace()
+                    }
                 }
             }
         }

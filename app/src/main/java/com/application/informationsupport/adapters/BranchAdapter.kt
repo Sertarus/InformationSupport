@@ -17,7 +17,11 @@ import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelBranchInfo
 
-class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo>, val currentUser: String) :RecyclerView.Adapter<BranchAdapter.BranchHolder>() {
+class BranchAdapter(
+    val context: Activity,
+    var branchList: List<ModelBranchInfo>,
+    val currentUser: String
+) : RecyclerView.Adapter<BranchAdapter.BranchHolder>() {
 
     class BranchHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
@@ -79,7 +83,8 @@ class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo
                             )
                             rs.next()
                             val creatorID = rs.getString("iduser")
-                            val branchIDRS = connection.createStatement().executeQuery("select idbranch from branches where name = '${holder.nameTV.text}'")
+                            val branchIDRS = connection.createStatement()
+                                .executeQuery("select idbranch from branches where name = '${holder.nameTV.text}'")
                             branchIDRS.next()
                             val branchID = branchIDRS.getString("idbranch")
                             val stmt = connection.createStatement()
@@ -88,8 +93,10 @@ class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo
                                         " changeddate = SYSTIMESTAMP, deleted = '1' where name =" +
                                         " '${holder.nameTV.text}'"
                             )
-                            connection.createStatement().executeQuery("update branches_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where branch = '$branchID'")
-                            connection.createStatement().executeQuery("update branches_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where branch = '$branchID'")
+                            connection.createStatement()
+                                .executeQuery("update branches_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where branch = '$branchID'")
+                            connection.createStatement()
+                                .executeQuery("update branches_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where branch = '$branchID'")
                             Toast.makeText(context, "Ветка удалена", Toast.LENGTH_SHORT).show()
                             connection.close()
                         } catch (e: SQLException) {
@@ -121,16 +128,24 @@ class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo
                 val name = nameSet.getString("login")
                 var higherBranchName = "-"
                 if (rs.getString("higherbranch") != null) {
-                    val higherBranchSet = connection.createStatement().executeQuery("select name from branches where idbranch = '${rs.getString("higherbranch")}'")
+                    val higherBranchSet = connection.createStatement()
+                        .executeQuery("select name from branches where idbranch = '${rs.getString("higherbranch")}'")
                     if (higherBranchSet.next()) {
                         higherBranchName = higherBranchSet.getString("name")
                     }
                 }
-                val datatypeSet = connection.createStatement().executeQuery("select name from datatypes where iddatatype = '${rs.getString("datatype")}'")
+                val datatypeSet = connection.createStatement()
+                    .executeQuery("select name from datatypes where iddatatype = '${rs.getString("datatype")}'")
                 datatypeSet.next()
                 val datatypeName = datatypeSet.getString("name")
                 dataSet.add(
-                    ModelBranchInfo(rs.getString("name"), higherBranchName, datatypeName, name, rs.getString("creationDate").split(".")[0])
+                    ModelBranchInfo(
+                        rs.getString("name"),
+                        higherBranchName,
+                        datatypeName,
+                        name,
+                        rs.getString("creationDate").split(".")[0]
+                    )
                 )
             }
             connection.close()
@@ -173,41 +188,45 @@ class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo
         var currentDatatype = ""
         try {
             val connection = DatabaseConnector().createConnection()
-            val infoRS = connection.createStatement().executeQuery("select * from branches where name = '$chosenBranchName'")
+            val infoRS = connection.createStatement()
+                .executeQuery("select * from branches where name = '$chosenBranchName'")
             infoRS.next()
             if (isEdit) {
-                val currentDatatypeRS = connection.createStatement().executeQuery("select name from datatypes where iddatatype = '${infoRS.getString("datatype")}'")
+                val currentDatatypeRS = connection.createStatement().executeQuery(
+                    "select name from datatypes where iddatatype = '${infoRS.getString("datatype")}'"
+                )
                 currentDatatypeRS.next()
                 currentDatatype = currentDatatypeRS.getString("name")
                 nameET.text = SpannableStringBuilder(chosenBranchName)
             }
-            val datatypeRS = connection.createStatement().executeQuery("select name from datatypes where deleted = '0'")
+            val datatypeRS = connection.createStatement()
+                .executeQuery("select name from datatypes where deleted = '0'")
             while (datatypeRS.next()) {
                 datatypeData.add(datatypeRS.getString("name"))
             }
-            val branchRS = connection.createStatement().executeQuery("select name from branches where deleted = '0'")
+            val branchRS = connection.createStatement()
+                .executeQuery("select name from branches where deleted = '0'")
             while (branchRS.next()) {
                 branchData.add(branchRS.getString("name"))
             }
             connection.close()
-        }
-        catch (e: SQLException) {
+        } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()
         }
-        val datatypeAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, datatypeData)
+        val datatypeAdapter =
+            ArrayAdapter(context, android.R.layout.simple_spinner_item, datatypeData)
         datatypeSpinner.adapter = datatypeAdapter
         val branchAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, branchData)
         branchSpinner.adapter = branchAdapter
         if (isEdit) {
             datatypeSpinner.setSelection(datatypeAdapter.getPosition(currentDatatype))
-        }
-        else {
+        } else {
             branchSpinner.setSelection(branchAdapter.getPosition("-"))
         }
         var serviceAdapter = CheckAdapter(context, mutableListOf(), "service")
         var districtAdapter = CheckAdapter(context, mutableListOf(), "district")
-        branchSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+        branchSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
             }
 
@@ -243,8 +262,7 @@ class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo
                     }
                     districtAdapter = CheckAdapter(context, newDistrictData, "district")
                     districtRecyclerView.adapter = districtAdapter
-                }
-                catch (e: SQLException) {
+                } catch (e: SQLException) {
                     Log.e("MyApp", e.toString())
                     e.printStackTrace()
                 }
@@ -270,69 +288,87 @@ class BranchAdapter (val context: Activity, var branchList: List<ModelBranchInfo
                 }
             }
             if (nameET.text.length !in 1..30 && nameET.text.toString() != "-") {
-                Toast.makeText(context, "Длина названия ветки должна быть от 1 до 30 символов", Toast.LENGTH_SHORT).show()
-            }
-            else if (!chosenService && !isEdit) {
+                Toast.makeText(
+                    context,
+                    "Длина названия ветки должна быть от 1 до 30 символов",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else if (!chosenService && !isEdit) {
                 Toast.makeText(context, "Не выбрано ни одной службы", Toast.LENGTH_SHORT).show()
-            }
-            else if (!chosenDistrict && !isEdit) {
+            } else if (!chosenDistrict && !isEdit) {
                 Toast.makeText(context, "Не выбрано ни одного района", Toast.LENGTH_SHORT).show()
-            }
-            else {
+            } else {
                 try {
                     val connection = DatabaseConnector().createConnection()
-                    val selectedDatatypeIDRS = connection.createStatement().executeQuery("select iddatatype from datatypes where name = '${datatypeSpinner.selectedItem}'")
-                    selectedDatatypeIDRS.next()
-                    val datatypeID = selectedDatatypeIDRS.getString("iddatatype")
-                    val selectedBranchIDRS = connection.createStatement().executeQuery("select idbranch from branches where name = '${branchSpinner.selectedItem}'")
-                    var selectedBranchID = ""
-                    if (selectedBranchIDRS.next()) {
-                        selectedBranchID = selectedBranchIDRS.getString("idbranch")
-                    }
-                    val rs = connection.createStatement().executeQuery(
-                        "select iduser from users where" +
-                                " login = '$currentUser'"
-                    )
-                    rs.next()
-                    val creatorID = rs.getString("iduser")
-                    if (isEdit) {
-                        connection.createStatement().executeQuery("update branches set name = '${nameET.text}', datatype = '$datatypeID', changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenBranchName'")
-                        Toast.makeText(context, "Ветка изменена", Toast.LENGTH_SHORT).show()
-                        ad.dismiss()
-                    }
-                    else {
-                        var branchString = ""
-                        var selectedBranchString = ""
-                        if (selectedBranchID != "") {
-                            branchString = "higherbranch, "
-                            selectedBranchString = "'$selectedBranchID', "
+                    val ifNameExist = connection.createStatement()
+                        .executeQuery("select * from branches where name = '${nameET.text}' and deleted = '0'")
+                    if (ifNameExist.next()) {
+                        Toast.makeText(
+                            context,
+                            "Ветка с таким именем уже существует",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        val selectedDatatypeIDRS = connection.createStatement()
+                            .executeQuery("select iddatatype from datatypes where name = '${datatypeSpinner.selectedItem}'")
+                        selectedDatatypeIDRS.next()
+                        val datatypeID = selectedDatatypeIDRS.getString("iddatatype")
+                        val selectedBranchIDRS = connection.createStatement()
+                            .executeQuery("select idbranch from branches where name = '${branchSpinner.selectedItem}'")
+                        var selectedBranchID = ""
+                        if (selectedBranchIDRS.next()) {
+                            selectedBranchID = selectedBranchIDRS.getString("idbranch")
                         }
-                        connection.createStatement().executeQuery("insert into branches (name, datatype, ${branchString}createdby, creationdate) values ('${nameET.text}', '$datatypeID', $selectedBranchString'$creatorID', SYSTIMESTAMP)")
-                        val branchIDRS = connection.createStatement().executeQuery("select idbranch from branches where name = '${nameET.text}'")
-                        branchIDRS.next()
-                        val branchID = branchIDRS.getString("idbranch")
-                        serviceAdapter.checkList.forEach {
-                            if (it.second) {
-                                val serviceIDRS = connection.createStatement().executeQuery("select idservice from services where name = '${it.first}'")
-                                serviceIDRS.next()
-                                val serviceID = serviceIDRS.getString("idservice")
-                                connection.createStatement().executeQuery("insert into branches_services (branch, service, createdby, creationdate) values ('$branchID', '$serviceID', '$creatorID', SYSTIMESTAMP)")
+                        val rs = connection.createStatement().executeQuery(
+                            "select iduser from users where" +
+                                    " login = '$currentUser'"
+                        )
+                        rs.next()
+                        val creatorID = rs.getString("iduser")
+                        if (isEdit) {
+                            connection.createStatement()
+                                .executeQuery("update branches set name = '${nameET.text}', datatype = '$datatypeID', changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenBranchName'")
+                            Toast.makeText(context, "Ветка изменена", Toast.LENGTH_SHORT).show()
+                            ad.dismiss()
+                        } else {
+                            var branchString = ""
+                            var selectedBranchString = ""
+                            if (selectedBranchID != "") {
+                                branchString = "higherbranch, "
+                                selectedBranchString = "'$selectedBranchID', "
                             }
-                        }
-                        districtAdapter.checkList.forEach {
-                            if (it.second) {
-                                val districtIDRS = connection.createStatement().executeQuery("select iddistrict from districts where name = '${it.first}'")
-                                districtIDRS.next()
-                                val districtID = districtIDRS.getString("iddistrict")
-                                connection.createStatement().executeQuery("insert into branches_districts (branch, district, createdby, creationdate) values ('$branchID', '$districtID', '$creatorID', SYSTIMESTAMP)")
+                            connection.createStatement()
+                                .executeQuery("insert into branches (name, datatype, ${branchString}createdby, creationdate) values ('${nameET.text}', '$datatypeID', $selectedBranchString'$creatorID', SYSTIMESTAMP)")
+                            val branchIDRS = connection.createStatement()
+                                .executeQuery("select idbranch from branches where name = '${nameET.text}'")
+                            branchIDRS.next()
+                            val branchID = branchIDRS.getString("idbranch")
+                            serviceAdapter.checkList.forEach {
+                                if (it.second) {
+                                    val serviceIDRS = connection.createStatement()
+                                        .executeQuery("select idservice from services where name = '${it.first}'")
+                                    serviceIDRS.next()
+                                    val serviceID = serviceIDRS.getString("idservice")
+                                    connection.createStatement()
+                                        .executeQuery("insert into branches_services (branch, service, createdby, creationdate) values ('$branchID', '$serviceID', '$creatorID', SYSTIMESTAMP)")
+                                }
                             }
+                            districtAdapter.checkList.forEach {
+                                if (it.second) {
+                                    val districtIDRS = connection.createStatement()
+                                        .executeQuery("select iddistrict from districts where name = '${it.first}'")
+                                    districtIDRS.next()
+                                    val districtID = districtIDRS.getString("iddistrict")
+                                    connection.createStatement()
+                                        .executeQuery("insert into branches_districts (branch, district, createdby, creationdate) values ('$branchID', '$districtID', '$creatorID', SYSTIMESTAMP)")
+                                }
+                            }
+                            Toast.makeText(context, "Ветка создана", Toast.LENGTH_SHORT).show()
+                            ad.dismiss()
                         }
-                        Toast.makeText(context, "Ветка создана", Toast.LENGTH_SHORT).show()
-                        ad.dismiss()
                     }
                     connection.close()
-                }
-                catch (e: SQLException) {
+                } catch (e: SQLException) {
                     Log.e("MyApp", e.toString())
                     e.printStackTrace()
                 }

@@ -2,6 +2,7 @@ package com.application.informationsupport
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -12,33 +13,47 @@ import com.application.informationsupport.adapters.ObjectListAdapter
 import com.application.informationsupport.models.ModelObjectList
 
 class MainActivity : AppCompatActivity() {
-    val testMap = mapOf(
-        ModelObjectList("Ориентировки", "Иванов И.И.", "03.12.2020", true) to mapOf(
-            ModelObjectList("Люди", "Иванов И.И.", "03.12.2020", true) to null,
-            ModelObjectList("Машины", "Сергеев И.И.", "01.01.2021", true) to null
-        ),
-        ModelObjectList("Преступления", "Сергеев И.И.", "01.01.2021", true) to mapOf(
-            ModelObjectList("Угон машины", "Иванов И.И.", "03.12.2020", false) to null,
-            ModelObjectList("Ограбление магазина", "Сергеев И.И.", "01.01.2021", false) to null
-        ),
-        ModelObjectList("Мероприятия", "Иванов И.И.", "05.10.2020", false) to null
-    )
+
+    lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        val adapter = ObjectListAdapter(this, testMap)
-        val recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
+        val adapter = ObjectListAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+        recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
+        adapter.refreshObjectList("")
         recyclerView.adapter = adapter
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.menu_main, menu)
-        return true
+        val item = menu!!.findItem(R.id.action_search)
+        val searchView = item.actionView as androidx.appcompat.widget.SearchView
+        searchView.setOnQueryTextListener(object :
+            androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                    if (!TextUtils.isEmpty(query!!.trim())) {
+                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList(query)
+                    } else {
+                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
+                    }
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                    if (!TextUtils.isEmpty(newText!!.trim())) {
+                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList(newText)
+                    } else {
+                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
+                    }
+                return false
+            }
+
+        })
+        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {

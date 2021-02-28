@@ -100,36 +100,43 @@ class SimpleItemAdapter(
                             if (nameET.text.toString().length in 1..40) {
                                 try {
                                     val connection = DatabaseConnector().createConnection()
-                                    val idStmt = connection.createStatement()
-                                    val rs = idStmt.executeQuery(
-                                        "select iduser from users where" +
-                                                " login = '$currentUser'"
-                                    )
-                                    rs.next()
-                                    val creatorID = rs.getString("iduser")
-                                    val stmt = connection.createStatement()
-                                    stmt.executeQuery(
-                                        "update ${currentType}s set name = '${nameET.text}'," +
-                                                " changedby = '$creatorID'," +
-                                                " changeddate = SYSTIMESTAMP where name = '${holder.nameTV.text}'"
-                                    )
-                                    var changeTypeString = ""
-                                    when (currentType) {
-                                        "service" -> {
-                                            changeTypeString = "Служба изменена"
-                                        }
-                                        "district" -> {
-                                            changeTypeString = "Район изменён"
-                                        }
-                                        "device" -> {
-                                            changeTypeString = "Устройство изменено"
-                                        }
+                                    val ifNameExist = connection.createStatement().executeQuery("select * from ${currentType}s where name = '${nameET.text}' and delete = '0'")
+                                    if (ifNameExist.next()) {
+                                        Toast.makeText(context, "Объект с таким именем уже существует", Toast.LENGTH_SHORT).show()
                                     }
-                                    Toast.makeText(context, changeTypeString, Toast.LENGTH_SHORT)
-                                        .show()
+                                    else {
+                                        val idStmt = connection.createStatement()
+                                        val rs = idStmt.executeQuery(
+                                            "select iduser from users where" +
+                                                    " login = '$currentUser'"
+                                        )
+                                        rs.next()
+                                        val creatorID = rs.getString("iduser")
+                                        val stmt = connection.createStatement()
+                                        stmt.executeQuery(
+                                            "update ${currentType}s set name = '${nameET.text}'," +
+                                                    " changedby = '$creatorID'," +
+                                                    " changeddate = SYSTIMESTAMP where name = '${holder.nameTV.text}'"
+                                        )
+                                        var changeTypeString = ""
+                                        when (currentType) {
+                                            "service" -> {
+                                                changeTypeString = "Служба изменена"
+                                            }
+                                            "district" -> {
+                                                changeTypeString = "Район изменён"
+                                            }
+                                            "device" -> {
+                                                changeTypeString = "Устройство изменено"
+                                            }
+                                        }
+                                        Toast.makeText(context, changeTypeString, Toast.LENGTH_SHORT)
+                                            .show()
+                                        refreshSimpleInfo()
+                                        ad.dismiss()
+                                    }
                                     connection.close()
-                                    refreshSimpleInfo()
-                                    ad.dismiss()
+
                                 } catch (e: SQLException) {
                                     Log.e("MyApp", e.toString())
                                     e.printStackTrace()

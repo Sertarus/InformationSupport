@@ -79,36 +79,42 @@ class DataTypeAdapter(
                             val creatorID = rs.getString("iduser")
                             val dataTypeRS = connection.createStatement().executeQuery(
                                 "select iddatatype from datatypes where" +
-                                        " name = '${holder.nameTV.text}'"
+                                        " name = '${holder.nameTV.text}' and deleted = '0'"
                             )
                             dataTypeRS.next()
                             val datatypeID = dataTypeRS.getString("iddatatype")
                             val recordToDelete = connection.createStatement()
-                                .executeQuery("select recordtype from datatypes_recordtypes" +
-                                        " where datatype in (select iddatatype from datatypes where" +
-                                        " name = '${holder.nameTV.text}') minus (select recordtype" +
-                                        " from datatypes_recordtypes where recordtype in (select" +
-                                        " recordtype from datatypes_recordtypes where datatype in" +
-                                        " (select iddatatype from datatypes where name =" +
-                                        " '${holder.nameTV.text}')) and datatype not in (select" +
-                                        " iddatatype from datatypes where name = '${holder.nameTV.text}'))")
+                                .executeQuery(
+                                    "select recordtype from datatypes_recordtypes" +
+                                            " where datatype in (select iddatatype from datatypes where" +
+                                            " name = '${holder.nameTV.text}') minus (select recordtype" +
+                                            " from datatypes_recordtypes where recordtype in (select" +
+                                            " recordtype from datatypes_recordtypes where datatype in" +
+                                            " (select iddatatype from datatypes where name =" +
+                                            " '${holder.nameTV.text}')) and datatype not in (select" +
+                                            " iddatatype from datatypes where name = '${holder.nameTV.text}'))"
+                                )
                             while (recordToDelete.next()) {
                                 connection.createStatement().executeQuery(
                                     "update recordtypes set changedby = '$creatorID'," +
                                             " changeddate = SYSTIMESTAMP, deleted = 1 where" +
                                             " idrecordtype = '${recordToDelete.getString(
-                                        "recordtype"
-                                    )}'"
+                                                "recordtype"
+                                            )}'"
                                 )
                             }
                             connection.createStatement()
-                                .executeQuery("update datatypes_recordtypes " +
-                                        "set changedby = '$creatorID', changeddate = SYSTIMESTAMP," +
-                                        " deleted = 1 where datatype ='$datatypeID'")
+                                .executeQuery(
+                                    "update datatypes_recordtypes " +
+                                            "set changedby = '$creatorID', changeddate = SYSTIMESTAMP," +
+                                            " deleted = 1 where datatype ='$datatypeID'"
+                                )
                             connection.createStatement()
-                                .executeQuery("update datatypes set changedby = '$creatorID'," +
-                                        " changeddate = SYSTIMESTAMP," +
-                                        " deleted = 1 where iddatatype = '$datatypeID'")
+                                .executeQuery(
+                                    "update datatypes set changedby = '$creatorID'," +
+                                            " changeddate = SYSTIMESTAMP," +
+                                            " deleted = 1 where iddatatype = '$datatypeID'"
+                                )
                             Toast.makeText(context, "Форма удалена", Toast.LENGTH_SHORT).show()
                             connection.close()
                         } catch (e: SQLException) {
@@ -207,58 +213,86 @@ class DataTypeAdapter(
             } else {
                 try {
                     val connection = DatabaseConnector().createConnection()
-                    val rs = connection.createStatement().executeQuery(
-                        "select iduser from users where" +
-                                " login = '$currentUser'"
-                    )
-                    rs.next()
-                    val creatorID = rs.getString("iduser")
-                    if (isEdit) {
-                        connection.createStatement()
-                            .executeQuery("update datatypes set name = '${nameET.text}'," +
-                                    " changedby = '$creatorID', changeddate = SYSTIMESTAMP" +
-                                    " where name = '${chosenDataTypeName}'")
-                        Toast.makeText(context, "Название формы было изменено", Toast.LENGTH_SHORT)
-                            .show()
-                        refreshDataTypes()
+                    val ifNameExistRS = connection.createStatement()
+                        .executeQuery("select * from datatypes where name = '${nameET.text}' and deleted = '0'")
+                    if (ifNameExistRS.next()) {
+                        Toast.makeText(
+                            context,
+                            "Форма данных с таким именем уже существует",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
-                        val ifHuman: String = if (ifHumanCheckbox.isChecked) "1"
-                        else "0"
-                        connection.createStatement()
-                            .executeQuery("insert into datatypes (name, ishuman, createdby," +
-                                    " creationdate) values ('${nameET.text}', '$ifHuman'," +
-                                    " '$creatorID', SYSTIMESTAMP)")
-                        if (ifHumanCheckbox.isChecked) {
-                            adapter.addedItemList.add(0, Pair("ФИО", 1))
-                            adapter.addedItemList.add(1, Pair("Дата рождения", 2))
-                            for (i in 2 until adapter.addedItemList.size) {
-                                adapter.addedItemList[i] = Pair(adapter.addedItemList[i].first, adapter.addedItemList[i].second + 3)
-                            }
-                        }
-                        adapter.addedItemList.forEach {
-                            val recordExistCheckRS = connection.createStatement()
-                                .executeQuery("select name from recordtypes where " +
-                                        "name = '${it.first}' and deleted = '0'")
-                            if (!recordExistCheckRS.next()) {
-                                connection.createStatement()
-                                    .executeQuery("insert into recordtypes (name, createdby," +
-                                            " creationdate) values ('${it.first}', '$creatorID', SYSTIMESTAMP)")
-                            }
-                            val datatypeIDRS = connection.createStatement()
-                                .executeQuery("select iddatatype from datatypes where name = '${nameET.text}'")
-                            datatypeIDRS.next()
-                            val datatypeID = datatypeIDRS.getString("iddatatype")
-                            val recordtypeIDRS = connection.createStatement()
-                                .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
-                            recordtypeIDRS.next()
-                            val recordTypeID = recordtypeIDRS.getString("idrecordtype")
+                        val rs = connection.createStatement().executeQuery(
+                            "select iduser from users where" +
+                                    " login = '$currentUser'"
+                        )
+                        rs.next()
+                        val creatorID = rs.getString("iduser")
+                        if (isEdit) {
                             connection.createStatement()
-                                .executeQuery("insert into datatypes_recordtypes (datatype," +
-                                        " recordtype, dataorder, createdby, creationdate) values ('$datatypeID'," +
-                                        " '$recordTypeID', '${it.second}', '$creatorID', SYSTIMESTAMP)")
+                                .executeQuery(
+                                    "update datatypes set name = '${nameET.text}'," +
+                                            " changedby = '$creatorID', changeddate = SYSTIMESTAMP" +
+                                            " where name = '${chosenDataTypeName}'"
+                                )
+                            Toast.makeText(
+                                context,
+                                "Название формы было изменено",
+                                Toast.LENGTH_SHORT
+                            )
+                                .show()
+                            refreshDataTypes()
+                        } else {
+                            val ifHuman: String = if (ifHumanCheckbox.isChecked) "1"
+                            else "0"
+                            connection.createStatement()
+                                .executeQuery(
+                                    "insert into datatypes (name, ishuman, createdby," +
+                                            " creationdate) values ('${nameET.text}', '$ifHuman'," +
+                                            " '$creatorID', SYSTIMESTAMP)"
+                                )
+                            if (ifHumanCheckbox.isChecked) {
+                                adapter.addedItemList.add(0, Pair("ФИО", 1))
+                                adapter.addedItemList.add(1, Pair("Дата рождения", 2))
+                                for (i in 2 until adapter.addedItemList.size) {
+                                    adapter.addedItemList[i] = Pair(
+                                        adapter.addedItemList[i].first,
+                                        adapter.addedItemList[i].second + 3
+                                    )
+                                }
+                            }
+                            adapter.addedItemList.forEach {
+                                val recordExistCheckRS = connection.createStatement()
+                                    .executeQuery(
+                                        "select name from recordtypes where " +
+                                                "name = '${it.first}' and deleted = '0'"
+                                    )
+                                if (!recordExistCheckRS.next()) {
+                                    connection.createStatement()
+                                        .executeQuery(
+                                            "insert into recordtypes (name, createdby," +
+                                                    " creationdate) values ('${it.first}', '$creatorID', SYSTIMESTAMP)"
+                                        )
+                                }
+                                val datatypeIDRS = connection.createStatement()
+                                    .executeQuery("select iddatatype from datatypes where name = '${nameET.text}'")
+                                datatypeIDRS.next()
+                                val datatypeID = datatypeIDRS.getString("iddatatype")
+                                val recordtypeIDRS = connection.createStatement()
+                                    .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
+                                recordtypeIDRS.next()
+                                val recordTypeID = recordtypeIDRS.getString("idrecordtype")
+                                connection.createStatement()
+                                    .executeQuery(
+                                        "insert into datatypes_recordtypes (datatype," +
+                                                " recordtype, dataorder, createdby, creationdate) values ('$datatypeID'," +
+                                                " '$recordTypeID', '${it.second}', '$creatorID', SYSTIMESTAMP)"
+                                    )
+                            }
+                            Toast.makeText(context, "Форма добавлена", Toast.LENGTH_SHORT).show()
+                            refreshDataTypes()
+                            ad.dismiss()
                         }
-                        Toast.makeText(context, "Форма добавлена", Toast.LENGTH_SHORT).show()
-                        refreshDataTypes()
                     }
                     connection.close()
                 } catch (e: SQLException) {
@@ -266,7 +300,6 @@ class DataTypeAdapter(
                     e.printStackTrace()
                 }
             }
-            ad.dismiss()
         }
     }
 }

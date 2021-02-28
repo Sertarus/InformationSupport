@@ -242,7 +242,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                 val connection = DatabaseConnector().createConnection()
                 val branchRS = connection.createStatement().executeQuery(
                     "select * from" +
-                            " branches where name = '${intent.getStringExtra("name")}'"
+                            " branches where name = '${intent.getStringExtra("name")}' and deleted = '0'"
                 )
                 branchRS.next()
                 dataSet.add(ModelDataItem("Название", branchRS.getString("name")))
@@ -311,19 +311,54 @@ class ObjectInfoActivity : AppCompatActivity() {
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
         if (type == "dataobject") {
-            informationTV.text = "Информация об объекте:"
+            informationTV.visibility = View.GONE
             try {
                 val connection = DatabaseConnector().createConnection()
                 val dataObjectRS = connection.createStatement()
                     .executeQuery("select * from dataobjects where name = '${intent.getStringExtra("name")}' and deleted = '0'")
                 dataObjectRS.next()
-                dataSet.add(ModelDataItem("Название", dataObjectRS.getString("name")))
-                val brachRS = connection.createStatement().executeQuery(
-                    "select name from branches where idbranch = '${dataObjectRS.getString("branch")}'"
-                )
-                brachRS.next()
-                val branchName = brachRS.getString("name")
-                dataSet.add(ModelDataItem("Располагается в ветке", branchName))
+                if(intent.getBooleanExtra("isAdmin", false)) {
+                    informationTV.text = "Информация об объекте:"
+                    informationTV.visibility = View.VISIBLE
+                    dataSet.add(ModelDataItem("Название", dataObjectRS.getString("name")))
+                    val brachRS = connection.createStatement().executeQuery(
+                        "select name from branches where idbranch = '${dataObjectRS.getString("branch")}'"
+                    )
+                    brachRS.next()
+                    val branchName = brachRS.getString("name")
+                    dataSet.add(ModelDataItem("Располагается в ветке", branchName))
+                    val userNameStmt = connection.createStatement()
+                    val userNameRS = userNameStmt.executeQuery(
+                        "select login from users where iduser =" +
+                                " '${dataObjectRS.getString("createdBy")}'"
+                    )
+                    userNameRS.next()
+                    val createdUserName = userNameRS.getString("login")
+                    dataSet.add(ModelDataItem("Создавший пользователь", createdUserName))
+                    dataSet.add(
+                        ModelDataItem(
+                            "Дата создания",
+                            dataObjectRS.getString("creationdate").split(".")[0]
+                        )
+                    )
+                    if (dataObjectRS.getString("changedby") != null && dataObjectRS.getString("changeddate") != null) {
+                        val changedUserNameStmt = connection.createStatement()
+                        val changedUserNameRS = changedUserNameStmt.executeQuery(
+                            "select login from users where iduser =" +
+                                    " '${dataObjectRS.getString("changedby")}'"
+                        )
+                        changedUserNameRS.next()
+                        val changedUserName = changedUserNameRS.getString("login")
+                        dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
+                        dataSet.add(
+                            ModelDataItem(
+                                "Дата последнего изменения",
+                                dataObjectRS.getString("changeddate").split(".")[0]
+                            )
+                        )
+                    }
+                    dataSet.add(ModelDataItem("Форма объекта", ""))
+                }
                 val image = dataObjectRS.getBlob("image")
                 if (image != null) {
                     val bytes = image.getBytes(1L, image.length().toInt())
@@ -331,37 +366,6 @@ class ObjectInfoActivity : AppCompatActivity() {
                     objectIV.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 250, 250, false))
                     objectIV.visibility = View.VISIBLE
                 }
-                val userNameStmt = connection.createStatement()
-                val userNameRS = userNameStmt.executeQuery(
-                    "select login from users where iduser =" +
-                            " '${dataObjectRS.getString("createdBy")}'"
-                )
-                userNameRS.next()
-                val createdUserName = userNameRS.getString("login")
-                dataSet.add(ModelDataItem("Создавший пользователь", createdUserName))
-                dataSet.add(
-                    ModelDataItem(
-                        "Дата создания",
-                        dataObjectRS.getString("creationdate").split(".")[0]
-                    )
-                )
-                if (dataObjectRS.getString("changedby") != null && dataObjectRS.getString("changeddate") != null) {
-                    val changedUserNameStmt = connection.createStatement()
-                    val changedUserNameRS = changedUserNameStmt.executeQuery(
-                        "select login from users where iduser =" +
-                                " '${dataObjectRS.getString("changedby")}'"
-                    )
-                    changedUserNameRS.next()
-                    val changedUserName = changedUserNameRS.getString("login")
-                    dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
-                    dataSet.add(
-                        ModelDataItem(
-                            "Дата последнего изменения",
-                            dataObjectRS.getString("changeddate").split(".")[0]
-                        )
-                    )
-                }
-                dataSet.add(ModelDataItem("Форма объекта", ""))
                 val idDataTypeRS = connection.createStatement()
                     .executeQuery("select datatype from branches where idBranch in (select branch from dataobjects where name = '${title}')")
                 idDataTypeRS.next()

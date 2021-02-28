@@ -442,30 +442,37 @@ class AdminActivity : AppCompatActivity() {
                 if (name.length in 1..40) {
                     try {
                         val connection = DatabaseConnector().createConnection()
-                        val timeStmt = connection.createStatement()
-                        val timeSet = timeStmt.executeQuery(
-                            "select TO_CHAR(SYSTIMESTAMP," +
-                                    " 'YYYY-MM-DD HH24:MI:SS.FF') as mydate from dual"
-                        )
-                        timeSet.next()
-                        val timestamp = timeSet.getString("mydate")
-                        val creatorIDStmt = connection.createStatement()
-                        val creatorSet = creatorIDStmt.executeQuery(
-                            "select iduser from users where" +
-                                    " login = '" + intent.getStringExtra("name") + "'"
-                        )
-                        creatorSet.next()
-                        val creatorID = creatorSet.getString("iduser")
-                        val insertStmt = connection.createStatement()
-                        insertStmt.executeQuery(
-                            "insert into ${currentData}s (name, createdby," +
-                                    " creationdate) values ('$name', '$creatorID', TO_TIMESTAMP('$timestamp'," +
-                                    " 'YYYY-MM-DD HH24:MI:SS.FF'))"
-                        )
-                        Toast.makeText(this, "Служба добавлена", Toast.LENGTH_SHORT).show()
-                        serviceAdapter.refreshSimpleInfo()
+                        val ifNameExist = connection.createStatement().executeQuery("select * from ${currentData}s where name = '$name'")
+                        if (ifNameExist.next()) {
+                            Toast.makeText(this, "Объект с таким именем уже существует", Toast.LENGTH_SHORT).show()
+                        }
+                        else {
+                            val timeStmt = connection.createStatement()
+                            val timeSet = timeStmt.executeQuery(
+                                "select TO_CHAR(SYSTIMESTAMP," +
+                                        " 'YYYY-MM-DD HH24:MI:SS.FF') as mydate from dual"
+                            )
+                            timeSet.next()
+                            val timestamp = timeSet.getString("mydate")
+                            val creatorIDStmt = connection.createStatement()
+                            val creatorSet = creatorIDStmt.executeQuery(
+                                "select iduser from users where" +
+                                        " login = '" + intent.getStringExtra("name") + "'"
+                            )
+                            creatorSet.next()
+                            val creatorID = creatorSet.getString("iduser")
+                            val insertStmt = connection.createStatement()
+                            insertStmt.executeQuery(
+                                "insert into ${currentData}s (name, createdby," +
+                                        " creationdate) values ('$name', '$creatorID', TO_TIMESTAMP('$timestamp'," +
+                                        " 'YYYY-MM-DD HH24:MI:SS.FF'))"
+                            )
+                            Toast.makeText(this, "Служба добавлена", Toast.LENGTH_SHORT).show()
+                            serviceAdapter.refreshSimpleInfo()
+                            ad.dismiss()
+                        }
                         connection.close()
-                        ad.dismiss()
+
                     } catch (e: SQLException) {
                         Log.e("MyApp", e.toString())
                         e.printStackTrace()

@@ -97,13 +97,14 @@ class DataObjectAdapter(
                         val intent = Intent(context, ObjectInfoActivity::class.java)
                         intent.putExtra("name", name)
                         intent.putExtra("type", "dataobject")
+                        intent.putExtra("isAdmin", true)
                         context.startActivity(intent)
                     }
 
                     1 -> {
                         createOrEditDataObject(holder.nameTV.text.toString(), true)
                     }
-                    2-> {
+                    2 -> {
                         try {
                             val connection = DatabaseConnector().createConnection()
                             val idStmt = connection.createStatement()
@@ -113,13 +114,15 @@ class DataObjectAdapter(
                             )
                             rs.next()
                             val creatorID = rs.getString("iduser")
-                            val dataObjectIDRS = connection.createStatement().executeQuery("select iddataobject from dataobjects where name = '${holder.nameTV.text}'")
+                            val dataObjectIDRS = connection.createStatement()
+                                .executeQuery("select iddataobject from dataobjects where name = '${holder.nameTV.text}'")
                             dataObjectIDRS.next()
                             val dataObjectID = dataObjectIDRS.getString("iddataobject")
-                            connection.createStatement().executeQuery("update dataobjects set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where name = '${holder.nameTV.text}'")
-                            connection.createStatement().executeQuery("update recordvalues set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where dataobject = '$dataObjectID'")
-                        }
-                        catch (e: SQLException) {
+                            connection.createStatement()
+                                .executeQuery("update dataobjects set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where name = '${holder.nameTV.text}'")
+                            connection.createStatement()
+                                .executeQuery("update recordvalues set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where dataobject = '$dataObjectID'")
+                        } catch (e: SQLException) {
                             Log.e("MyApp", e.toString())
                             e.printStackTrace()
                         }
@@ -147,7 +150,8 @@ class DataObjectAdapter(
                 nameSet.next()
                 val name = nameSet.getString("login")
                 val branchSet = connection.createStatement().executeQuery(
-                    "select name from branches where idbranch = '${rs.getString("branch")}' and deleted = '0'")
+                    "select name from branches where idbranch = '${rs.getString("branch")}' and deleted = '0'"
+                )
                 branchSet.next()
                 val branch = branchSet.getString("name")
                 dataSet.add(
@@ -196,8 +200,7 @@ class DataObjectAdapter(
                     val bytes = image.getBytes(1L, image.length().toInt())
                     val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                     imageView.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 200, 200, false))
-                }
-                else {
+                } else {
                     currentUri = Uri.EMPTY
                 }
             } else {
@@ -217,7 +220,7 @@ class DataObjectAdapter(
             e.printStackTrace()
         }
 
-        branchSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+        branchSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onNothingSelected(parent: AdapterView<*>?) {
 
             }
@@ -305,8 +308,18 @@ class DataObjectAdapter(
                                 )}' and dataobject = '$idDataObject'"
                             )
                             recordValueRS.next()
-                            oldRecordList.add(Pair(recordTypesRS.getString("name"), recordValueRS.getString("value")))
-                            formRecordList.add(Pair(recordTypesRS.getString("name"), recordValueRS.getString("value")))
+                            oldRecordList.add(
+                                Pair(
+                                    recordTypesRS.getString("name"),
+                                    recordValueRS.getString("value")
+                                )
+                            )
+                            formRecordList.add(
+                                Pair(
+                                    recordTypesRS.getString("name"),
+                                    recordValueRS.getString("value")
+                                )
+                            )
                             editText.text = SpannableStringBuilder(recordValueRS.getString("value"))
                             textInputLayout.addView(editText)
                         }
@@ -359,16 +372,24 @@ class DataObjectAdapter(
                     }
                 }
                 if (!isRecordsCorrect) {
-                    Toast.makeText(context, "Длина значения каждого реквизита должна быть от 1 до 150 символов", Toast.LENGTH_SHORT).show()
-                }
-                else {
+                    Toast.makeText(
+                        context,
+                        "Длина значения каждого реквизита должна быть от 1 до 150 символов",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
                     formRecordList.clear()
                     for (i in 1 until dataLL.childCount - 1) {
                         val TIL = dataLL.getChildAt(i) as TextInputLayout
-                        formRecordList.add(Pair(TIL.hint.toString(), TIL.editText!!.text.toString()))
+                        formRecordList.add(
+                            Pair(
+                                TIL.hint.toString(),
+                                TIL.editText!!.text.toString()
+                            )
+                        )
                     }
+                    ad.dismiss()
                 }
-                ad.dismiss()
             }
         }
         val changeBuilder = AlertDialog.Builder(context)
@@ -377,76 +398,98 @@ class DataObjectAdapter(
         ad.show()
         createButton.setOnClickListener {
             if (nameET.text.length !in 1..30) {
-                Toast.makeText(context, "Длина названия объекта должна быть от 1 до 30 символов", Toast.LENGTH_SHORT).show()
-            }
-            else if (formRecordList.isEmpty()) {
-                Toast.makeText(context, "Форма объекта должна быть заполнена", Toast.LENGTH_SHORT).show()
-            }
-            else {
+                Toast.makeText(
+                    context,
+                    "Длина названия объекта должна быть от 1 до 30 символов",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else if (formRecordList.isEmpty()) {
+                Toast.makeText(context, "Форма объекта должна быть заполнена", Toast.LENGTH_SHORT)
+                    .show()
+            } else {
                 var encodedImage: ByteArray? = null
                 if (this::currentUri.isInitialized && currentUri != Uri.EMPTY) {
-                    val bitmap = MediaStore.Images.Media.getBitmap(context.contentResolver, currentUri)
+                    val bitmap =
+                        MediaStore.Images.Media.getBitmap(context.contentResolver, currentUri)
                     val baos = ByteArrayOutputStream()
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 40, baos)
                     encodedImage = baos.toByteArray()
                 }
                 val connection = DatabaseConnector().createConnection()
-                val rs = connection.createStatement().executeQuery(
-                    "select iduser from users where" +
-                            " login = '$currentUser'"
-                )
-                rs.next()
-                val creatorID = rs.getString("iduser")
-                if (isEdit) {
-                    val dataObjectRS = connection.createStatement().executeQuery("select iddataobject from dataobjects where name = '$chosenDataObjectName'")
-                    dataObjectRS.next()
-                    val dataObjectID = dataObjectRS.getString("iddataobject")
-                    if (encodedImage != null) {
-                        val preparedStatement = connection.prepareStatement("update dataobjects set name = '${nameET.text}', image = ?, changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
-                        preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
-                        preparedStatement.executeUpdate()
-                    }
-                    else {
-                        connection.createStatement().executeQuery("update dataobjects set name = '${nameET.text}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
-                    }
-                    var counter = 0
-                    formRecordList.forEach {
-                        if (it.second != oldRecordList[0].second) {
-                            val recordTypeIDRS = connection.createStatement().executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
+                val ifNameExistRS = connection.createStatement()
+                    .executeQuery("select * from dataobjects where name = '${nameET.text}' and deleted = '0'")
+                if (ifNameExistRS.next()) {
+                    Toast.makeText(
+                        context,
+                        "Объект с таким именем уже существует",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    val rs = connection.createStatement().executeQuery(
+                        "select iduser from users where" +
+                                " login = '$currentUser'"
+                    )
+                    rs.next()
+                    val creatorID = rs.getString("iduser")
+                    if (isEdit) {
+                        val dataObjectRS = connection.createStatement()
+                            .executeQuery("select iddataobject from dataobjects where name = '$chosenDataObjectName'")
+                        dataObjectRS.next()
+                        val dataObjectID = dataObjectRS.getString("iddataobject")
+                        if (encodedImage != null) {
+                            val preparedStatement =
+                                connection.prepareStatement("update dataobjects set name = '${nameET.text}', image = ?, changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
+                            preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
+                            preparedStatement.executeUpdate()
+                        } else {
+                            connection.createStatement()
+                                .executeQuery("update dataobjects set name = '${nameET.text}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
+                        }
+                        var counter = 0
+                        formRecordList.forEach {
+                            if (it.second != oldRecordList[0].second) {
+                                val recordTypeIDRS = connection.createStatement()
+                                    .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
+                                recordTypeIDRS.next()
+                                val recordTypeID = recordTypeIDRS.getString("idrecordtype")
+                                connection.createStatement()
+                                    .executeQuery("update recordvalues set value = '${it.second}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where recordtype = '$recordTypeID' and dataobject = '$dataObjectID'")
+                            }
+                            counter++
+                        }
+                        Toast.makeText(context, "Объект изменён", Toast.LENGTH_SHORT).show()
+                        ad.dismiss()
+                        refreshDataObjects()
+                    } else {
+                        val selectedBranchIDRS = connection.createStatement()
+                            .executeQuery("select idbranch from branches where name = '${branchSpinner.selectedItem}' and deleted = '0'")
+                        selectedBranchIDRS.next()
+                        val selectedBranchID = selectedBranchIDRS.getString("idbranch")
+                        if (encodedImage != null) {
+                            val preparedStatement =
+                                connection.prepareStatement("insert into dataobjects (name, branch, image, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', ?, '$creatorID', SYSTIMESTAMP)")
+                            preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
+                            preparedStatement.executeUpdate()
+                        } else {
+                            connection.createStatement()
+                                .executeQuery("insert into dataobjects (name, branch, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', '$creatorID', SYSTIMESTAMP)")
+                        }
+                        val dataObjectRS = connection.createStatement()
+                            .executeQuery("select iddataobject from dataobjects where name = '${nameET.text}'")
+                        dataObjectRS.next()
+                        val dataObjectID = dataObjectRS.getString("iddataobject")
+                        formRecordList.forEach {
+                            val recordTypeIDRS = connection.createStatement()
+                                .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
                             recordTypeIDRS.next()
                             val recordTypeID = recordTypeIDRS.getString("idrecordtype")
-                            connection.createStatement().executeQuery("update recordvalues set value = '${it.second}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where recordtype = '$recordTypeID' and dataobject = '$dataObjectID'")
+                            connection.createStatement()
+                                .executeQuery("insert into recordvalues (value, recordtype, dataobject, createdby, creationdate) values ('${it.second}', '$recordTypeID', '$dataObjectID', '$creatorID', SYSTIMESTAMP)")
                         }
-                        counter++
+                        Toast.makeText(context, "Объект создан", Toast.LENGTH_SHORT).show()
+                        ad.dismiss()
+                        refreshDataObjects()
                     }
-                    Toast.makeText(context, "Объект изменён", Toast.LENGTH_SHORT).show()
-                    ad.dismiss()
-                    refreshDataObjects()
-                }
-                else {
-                    val selectedBranchIDRS = connection.createStatement().executeQuery("select idbranch from branches where name = '${branchSpinner.selectedItem}' and deleted = '0'")
-                    selectedBranchIDRS.next()
-                    val selectedBranchID = selectedBranchIDRS.getString("idbranch")
-                    if (encodedImage != null) {
-                        val preparedStatement = connection.prepareStatement("insert into dataobjects (name, branch, image, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', ?, '$creatorID', SYSTIMESTAMP)")
-                        preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
-                        preparedStatement.executeUpdate()
-                    }
-                    else {
-                        connection.createStatement().executeQuery("insert into dataobjects (name, branch, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', '$creatorID', SYSTIMESTAMP)")
-                    }
-                    val dataObjectRS = connection.createStatement().executeQuery("select iddataobject from dataobjects where name = '${nameET.text}'")
-                    dataObjectRS.next()
-                    val dataObjectID = dataObjectRS.getString("iddataobject")
-                    formRecordList.forEach {
-                        val recordTypeIDRS = connection.createStatement().executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
-                        recordTypeIDRS.next()
-                        val recordTypeID = recordTypeIDRS.getString("idrecordtype")
-                        connection.createStatement().executeQuery("insert into recordvalues (value, recordtype, dataobject, createdby, creationdate) values ('${it.second}', '$recordTypeID', '$dataObjectID', '$creatorID', SYSTIMESTAMP)")
-                    }
-                    Toast.makeText(context, "Объект создан", Toast.LENGTH_SHORT).show()
-                    ad.dismiss()
-                    refreshDataObjects()
                 }
                 connection.close()
             }
