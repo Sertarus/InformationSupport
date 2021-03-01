@@ -73,13 +73,13 @@ class AdminActivity : AppCompatActivity() {
                 "Устройства",
                 "Ветки",
                 "Формы заполнения",
-                "Объекты данных"
+                "Объекты данных",
+                "Мероприятия"
             )
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Выберите необходимый тип данных")
             builder.setItems(options) { _, which ->
                 when (which) {
-
                     0 -> {
                         title = "Пользователи"
                         currentData = "user"

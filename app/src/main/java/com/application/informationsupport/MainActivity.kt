@@ -1,20 +1,24 @@
 package com.application.informationsupport
 
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.text.TextUtils
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
+import android.view.*
+import android.view.View.OnLongClickListener
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.adapters.ObjectListAdapter
-import com.application.informationsupport.models.ModelObjectList
+
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var recyclerView: RecyclerView
+    var hot_number = 0
+    var ui_hot: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +57,12 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
+        val menu_hotlist = menu.findItem(R.id.menu_hotlist).actionView
+        ui_hot = menu_hotlist.findViewById(R.id.hotlist_hot)
+        updateHotCount(1)
+        menu_hotlist.setOnClickListener {
+            Toast.makeText(this, "123", Toast.LENGTH_SHORT).show()
+        }
         return super.onCreateOptionsMenu(menu)
     }
 
@@ -84,4 +94,16 @@ class MainActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
+    fun updateHotCount(new_hot_number: Int) {
+        hot_number = new_hot_number
+        if (ui_hot == null) return
+        runOnUiThread {
+            if (new_hot_number == 0) ui_hot!!.visibility = View.INVISIBLE else {
+                ui_hot!!.visibility = View.VISIBLE
+                ui_hot!!.text = hot_number.toString()
+            }
+        }
+    }
+
 }

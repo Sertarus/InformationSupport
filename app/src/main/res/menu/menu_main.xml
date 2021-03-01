@@ -15,4 +15,10 @@
         android:title="Поиск"
         app:showAsAction="always"
         app:actionViewClass="androidx.appcompat.widget.SearchView" />
+
+    <item android:id="@+id/menu_hotlist"
+        app:actionLayout="@layout/action_bar_notification_icon"
+        android:icon="@drawable/ic_bell"
+        android:title="@string/hotlist"
+        app:showAsAction="ifRoom" />
 </menu>
