@@ -5,8 +5,6 @@ import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.SQLException
-import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
@@ -20,15 +18,13 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.adapters.*
 import com.application.informationsupport.database.DatabaseConnector
-import com.application.informationsupport.models.ModelBranchInfo
-import com.application.informationsupport.models.ModelDataObject
-import com.application.informationsupport.models.ModelMainUserInfo
-import com.application.informationsupport.models.ModelSimpleInfo
+import com.application.informationsupport.models.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.util.*
 
@@ -48,6 +44,7 @@ class AdminActivity : AppCompatActivity() {
     var datatypeAdapter = DataTypeAdapter(this, mutableListOf(), "")
     var branchAdapter = BranchAdapter(this, mutableListOf(), "")
     var dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), "")
+    var eventAdapter = EventAdapter(this, mutableListOf(), "")
     lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,6 +52,11 @@ class AdminActivity : AppCompatActivity() {
         setContentView(R.layout.activity_admin)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         title = "Панель администратора"
+        val configuration = this.getResources().getConfiguration()
+        val locale = Locale("ru", "RU")
+        configuration.setLocale(locale)
+        configuration.setLayoutDirection(locale)
+        this.createConfigurationContext(configuration)
         val chooseDatabaseTypeObjectButton =
             findViewById<FloatingActionButton>(R.id.floatingChooseButton)
         val addObjectButton = findViewById<FloatingActionButton>(R.id.floatingAddButton)
@@ -140,9 +142,21 @@ class AdminActivity : AppCompatActivity() {
                     6 -> {
                         title = "Объекты данных"
                         currentData = "dataobject"
-                        dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        dataObjectAdapter = DataObjectAdapter(
+                            this,
+                            mutableListOf(),
+                            intent.getStringExtra("name")!!
+                        )
                         dataObjectAdapter.refreshDataObjects()
                         recyclerView.adapter = dataObjectAdapter
+                    }
+                    7 -> {
+                        title = "Мероприятия"
+                        currentData = "event"
+                        eventAdapter =
+                            EventAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                        eventAdapter.refreshEvents()
+                        recyclerView.adapter = eventAdapter
                     }
                 }
             }
@@ -164,6 +178,9 @@ class AdminActivity : AppCompatActivity() {
             }
             if (currentData == "dataobject") {
                 dataObjectAdapter.createOrEditDataObject("", false)
+            }
+            if (currentData == "event") {
+                eventAdapter.createOrEditEvent("", false)
             }
         }
 
@@ -313,7 +330,7 @@ class AdminActivity : AppCompatActivity() {
                 val connection = DatabaseConnector().createConnection()
                 val rs = connection.createStatement().executeQuery(
                     "select * from datatypes where" +
-                            " name like '%$query%' and deleted = '0'"
+                            " lower(name) like '%${query.toLowerCase(Locale.ROOT)}%' and deleted = '0'"
                 )
                 while (rs.next()) {
                     val newStmt = connection.createStatement()
@@ -343,7 +360,11 @@ class AdminActivity : AppCompatActivity() {
             try {
                 val connection = DatabaseConnector().createConnection()
                 val rs = connection.createStatement()
-                    .executeQuery("select * from branches where name like '%$query%' and deleted = '0'")
+                    .executeQuery(
+                        "select * from branches where lower(name) like '%${query.toLowerCase(
+                            Locale.ROOT
+                        )}%' and deleted = '0'"
+                    )
                 while (rs.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -388,7 +409,13 @@ class AdminActivity : AppCompatActivity() {
             val dataSet = mutableListOf<ModelDataObject>()
             try {
                 val connection = DatabaseConnector().createConnection()
-                val rs = connection.createStatement().executeQuery("select * from dataobjects where (name like '%$query%' or branch in (select idbranch from branches where  name like '%$query%')) and deleted = '0'")
+                val rs = connection.createStatement().executeQuery(
+                    "select * from dataobjects where (lower(name) like '%${query.toLowerCase(
+                        Locale.ROOT
+                    )}%' or branch in (select idbranch from branches where lower(name) like '%${query.toLowerCase(
+                        Locale.ROOT
+                    )}%')) and deleted = '0'"
+                )
                 while (rs.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -398,19 +425,64 @@ class AdminActivity : AppCompatActivity() {
                     nameSet.next()
                     val name = nameSet.getString("login")
                     val branchSet = connection.createStatement().executeQuery(
-                        "select name from branches where idbranch = '${rs.getString("branch")}' and deleted = '0'")
+                        "select name from branches where idbranch = '${rs.getString("branch")}' and deleted = '0'"
+                    )
                     branchSet.next()
                     val branch = branchSet.getString("name")
-                    dataSet.add(ModelDataObject(rs.getString("name"), branch, name, rs.getString("creationdate").split(".")[0]))
+                    dataSet.add(
+                        ModelDataObject(
+                            rs.getString("name"),
+                            branch,
+                            name,
+                            rs.getString("creationdate").split(".")[0]
+                        )
+                    )
                 }
                 connection.close()
-            }
-            catch (e: SQLException) {
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
             dataObjectAdapter = DataObjectAdapter(this, dataSet, intent.getStringExtra("name")!!)
             recyclerView.adapter = dataObjectAdapter
+        }
+        if (currentData == "event") {
+            val dataSet = mutableListOf<ModelEvent>()
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val rs = connection.createStatement().executeQuery(
+                    "select * from events where (lower(name) like '%${query.toLowerCase(
+                        Locale.ROOT
+                    )}%' and deleted = '0') or idevent in (select event from events_services where service in (select idservice from services where lower(name) like '%${query.toLowerCase(
+                        Locale.ROOT
+                    )}%') and deleted = '0') or idevent in (select event from events_districts where district in (select iddistrict from districts where lower(name) like '%${query.toLowerCase(
+                        Locale.ROOT
+                    )}%') and deleted = '0')"
+                )
+                while (rs.next()) {
+                    val newStmt = connection.createStatement()
+                    val nameSet = newStmt.executeQuery(
+                        "select login from users where iduser = '" +
+                                rs.getString("createdby") + "'"
+                    )
+                    nameSet.next()
+                    val name = nameSet.getString("login")
+                    dataSet.add(
+                        ModelEvent(
+                            rs.getString("name"),
+                            name,
+                            rs.getString("timestart").split(".")[0],
+                            rs.getString("timeend").split(".")[0]
+                        )
+                    )
+                }
+                connection.close()
+            } catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            eventAdapter = EventAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            recyclerView.adapter = eventAdapter
         }
     }
 
@@ -442,11 +514,15 @@ class AdminActivity : AppCompatActivity() {
                 if (name.length in 1..40) {
                     try {
                         val connection = DatabaseConnector().createConnection()
-                        val ifNameExist = connection.createStatement().executeQuery("select * from ${currentData}s where name = '$name'")
+                        val ifNameExist = connection.createStatement()
+                            .executeQuery("select * from ${currentData}s where name = '$name'")
                         if (ifNameExist.next()) {
-                            Toast.makeText(this, "Объект с таким именем уже существует", Toast.LENGTH_SHORT).show()
-                        }
-                        else {
+                            Toast.makeText(
+                                this,
+                                "Объект с таким именем уже существует",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
                             val timeStmt = connection.createStatement()
                             val timeSet = timeStmt.executeQuery(
                                 "select TO_CHAR(SYSTIMESTAMP," +
@@ -580,5 +656,4 @@ class AdminActivity : AppCompatActivity() {
             Bundle()
         )
     }
-
 }

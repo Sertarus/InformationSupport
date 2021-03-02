@@ -30,6 +30,7 @@ class CheckAdapter (val context: Activity, var checkList: MutableList<Pair<Strin
 
     override fun onBindViewHolder(holder: CheckHolder, position: Int) {
         holder.nameTV.text = checkList[position].first
+        holder.checkbox.isChecked = checkList[position].second
         if (type == "service") holder.imageView.setImageResource(R.drawable.ic_service)
         else holder.imageView.setImageResource(R.drawable.ic_district)
         holder.itemView.setOnClickListener {

@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
@@ -67,11 +68,63 @@ class EventAdapter(
                         context.startActivity(intent)
                     }
                     1 -> {
-
+                        createOrEditEvent(name, true)
+                    }
+                    2 -> {
+                        try {
+                            val connection = DatabaseConnector().createConnection()
+                            val idStmt = connection.createStatement()
+                            val rs = idStmt.executeQuery(
+                                "select iduser from users where" +
+                                        " login = '$currentUser'"
+                            )
+                            rs.next()
+                            val creatorID = rs.getString("iduser")
+                            val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '$name' and deleted = '0'")
+                            eventIDRS.next()
+                            val eventID = eventIDRS.getString("idevent")
+                            connection.createStatement().executeQuery("update events set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where idevent = '$eventID'")
+                            connection.createStatement().executeQuery("update events_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                            connection.createStatement().executeQuery("update events_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                            Toast.makeText(context, "Мероприятие удалено", Toast.LENGTH_SHORT).show()
+                            connection.close()
+                        }
+                        catch (e: SQLException) {
+                            Log.e("MyApp", e.toString())
+                            e.printStackTrace()
+                        }
+                        refreshEvents()
                     }
                 }
             }
+            builder.create().show()
         }
+    }
+
+    fun refreshEvents() {
+        val dataSet = mutableListOf<ModelEvent>()
+        try {
+            val connection = DatabaseConnector().createConnection()
+            val rs = connection.createStatement()
+                .executeQuery("select * from events where deleted = '0'")
+            while (rs.next()) {
+                val newStmt = connection.createStatement()
+                val nameSet = newStmt.executeQuery(
+                    "select login from users where iduser = '" +
+                            rs.getString("createdby") + "'"
+                )
+                nameSet.next()
+                val name = nameSet.getString("login")
+                dataSet.add(ModelEvent(rs.getString("name"), name, rs.getString("timestart").split(".")[0], rs.getString("timeend").split(".")[0]))
+            }
+            connection.close()
+        }
+        catch (e: SQLException) {
+            Log.e("MyApp", e.toString())
+            e.printStackTrace()
+        }
+        this.eventList = dataSet
+        this.notifyDataSetChanged()
     }
 
     fun createOrEditEvent(chosenEventName: String, isEdit: Boolean) {
@@ -85,7 +138,11 @@ class EventAdapter(
         val endTimeET = view.findViewById<EditText>(R.id.endTimeET)
         val descriptionET = view.findViewById<EditText>(R.id.descriptionET)
         val serviceRV = view.findViewById<RecyclerView>(R.id.serviceRecyclerView)
+        serviceRV.setHasFixedSize(true)
+        serviceRV.layoutManager = LinearLayoutManager(context)
         val districtRV = view.findViewById<RecyclerView>(R.id.districtRecyclerView)
+        districtRV.setHasFixedSize(true)
+        districtRV.layoutManager = LinearLayoutManager(context)
         val addButton = view.findViewById<Button>(R.id.createEventButton)
         try {
             val connection = DatabaseConnector().createConnection()
@@ -115,7 +172,7 @@ class EventAdapter(
                 endDateET.text = SpannableStringBuilder(endTimestamp.split(" ")[0])
                 endTimeET.text = SpannableStringBuilder(endTimestamp.split(" ")[1])
                 descriptionET.text = SpannableStringBuilder(eventInfoRS.getString("description"))
-                val checkedServicesRS = connection.createStatement().executeQuery("select name from services where idservice in (select service from events_services where event = '${eventInfoRS.getString("idevent")}')")
+                val checkedServicesRS = connection.createStatement().executeQuery("select name from services where idservice in (select service from events_services where event = '${eventInfoRS.getString("idevent")}' and deleted = '0')")
                 while (checkedServicesRS.next()) {
                     for (i in 0 until serviceData.size) {
                         val name = serviceData[i].first
@@ -126,7 +183,7 @@ class EventAdapter(
                     }
                 }
                 serviceRV.adapter = CheckAdapter(context, serviceData, "service")
-                val checkedDistrictsRS = connection.createStatement().executeQuery("select name from districts where iddistrict in (select district from events_districts where event = '${eventInfoRS.getString("idevent")}')")
+                val checkedDistrictsRS = connection.createStatement().executeQuery("select name from districts where iddistrict in (select district from events_districts where event = '${eventInfoRS.getString("idevent")}' and deleted = '0')")
                 while (checkedDistrictsRS.next()) {
                     for (i in 0 until districtData.size) {
                         val name = districtData[i].first
@@ -150,7 +207,11 @@ class EventAdapter(
             val cDay = calendar.get(Calendar.DAY_OF_MONTH)
             val datePickerDialog = DatePickerDialog(context,
                 DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
-                    startDateET.text = SpannableStringBuilder("${year}-${month}-${dayOfMonth}")
+                    var formatMonth = month.toString()
+                    if (month < 10) formatMonth = "0$month"
+                    var formatDay = dayOfMonth.toString()
+                    if (dayOfMonth < 10) formatDay = "0$dayOfMonth"
+                    startDateET.text = SpannableStringBuilder("${year}-${formatMonth}-${formatDay}")
                 }, cYear, cMonth, cDay
             )
             datePickerDialog.show()
@@ -162,7 +223,11 @@ class EventAdapter(
             val timePickerDialog = TimePickerDialog(
                 context,
                 TimePickerDialog.OnTimeSetListener { _, hour, minute ->
-                    startTimeET.text = SpannableStringBuilder("${hour}:${minute}:00")
+                    var formatHour = hour.toString()
+                    var formatMinute = minute.toString()
+                    if (minute < 10) formatMinute = "0$minute"
+                    if (hour < 10) formatHour = "0$hour"
+                    startTimeET.text = SpannableStringBuilder("${formatHour}:${formatMinute}:00")
                 },
                 cHour,
                 cMinute,
@@ -177,7 +242,11 @@ class EventAdapter(
             val cDay = calendar.get(Calendar.DAY_OF_MONTH)
             val datePickerDialog = DatePickerDialog(context,
                 DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
-                    endDateET.text = SpannableStringBuilder("${year}-${month}-${dayOfMonth}")
+                    var formatMonth = month.toString()
+                    if (month < 10) formatMonth = "0$month"
+                    var formatDay = dayOfMonth.toString()
+                    if (dayOfMonth < 10) formatDay = "0$dayOfMonth"
+                    endDateET.text = SpannableStringBuilder("${year}-${formatMonth}-${formatDay}")
                 }, cYear, cMonth, cDay
             )
             datePickerDialog.show()
@@ -189,7 +258,11 @@ class EventAdapter(
             val timePickerDialog = TimePickerDialog(
                 context,
                 TimePickerDialog.OnTimeSetListener { _, hour, minute ->
-                    endTimeET.text = SpannableStringBuilder("${hour}:${minute}:00")
+                    var formatHour = hour.toString()
+                    var formatMinute = minute.toString()
+                    if (minute < 10) formatMinute = "0$minute"
+                    if (hour < 10) formatHour = "0$hour"
+                    endTimeET.text = SpannableStringBuilder("${formatHour}:${formatMinute}:00")
                 },
                 cHour,
                 cMinute,
@@ -231,8 +304,8 @@ class EventAdapter(
             else {
                 try {
                     val connection = DatabaseConnector().createConnection()
-                    val ifNameExistRS = connection.createStatement().executeQuery("select * from events where name = '${nameET.text}'")
-                    if (ifNameExistRS.next()) {
+                    val ifNameExistRS = connection.createStatement().executeQuery("select * from events where name = '${nameET.text}' and deleted = '0'")
+                    if (!isEdit && ifNameExistRS.next()) {
                         Toast.makeText(context, "Мероприятие с таким названием уже существует", Toast.LENGTH_SHORT).show()
                     }
                     else {
@@ -243,17 +316,17 @@ class EventAdapter(
                         rs.next()
                         val creatorID = rs.getString("iduser")
                         if (isEdit) {
-                            val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '$chosenEventName'")
+                            val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '$chosenEventName' and deleted = '0'")
                             eventIDRS.next()
                             val eventID = eventIDRS.getString("idevent")
-                            connection.createStatement().executeQuery("update events set name = '${nameET.text}', description = '${descriptionET.text}', timestart = TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), timeend = TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), changedby = '$creatorID', changeddate = SYSTIMESTAMP")
-                            connection.createStatement().executeQuery("update events_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1'")
-                            connection.createStatement().executeQuery("update events_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1'")
+                            connection.createStatement().executeQuery("update events set name = '${nameET.text}', description = '${descriptionET.text}', timestart = TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), timeend = TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), changedby = '$creatorID', changeddate = SYSTIMESTAMP where idevent = '$eventID'")
+                            connection.createStatement().executeQuery("update events_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                            connection.createStatement().executeQuery("update events_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
                         }
                         else {
-                            connection.createStatement().executeQuery("insert into events (name, description, timestart, timeend, createdby, creationdate) values (${nameET.text}, ${descriptionET.text}, TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), '$creatorID', SYSTIMESTAMP)")
+                            connection.createStatement().executeQuery("insert into events (name, description, timestart, timeend, createdby, creationdate) values ('${nameET.text}', '${descriptionET.text}', TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), '$creatorID', SYSTIMESTAMP)")
                         }
-                        val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '${nameET.text}'")
+                        val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '${nameET.text}' and deleted = '0'")
                         eventIDRS.next()
                         val eventID = eventIDRS.getString("idevent")
                         (serviceRV.adapter as CheckAdapter).checkList.forEach {
@@ -271,7 +344,7 @@ class EventAdapter(
                                     .executeQuery("select iddistrict from districts where name = '${it.first}'")
                                 districtIDRS.next()
                                 val districtID = districtIDRS.getString("iddistrict")
-                                connection.createStatement().executeQuery("insert into events_districts (event, service, createdby, creationdate) values ('$eventID', '$districtID', '$creatorID', SYSTIMESTAMP)")
+                                connection.createStatement().executeQuery("insert into events_districts (event, district, createdby, creationdate) values ('$eventID', '$districtID', '$creatorID', SYSTIMESTAMP)")
                             }
                         }
                         if (isEdit) {
@@ -280,6 +353,8 @@ class EventAdapter(
                         else {
                             Toast.makeText(context, "Мероприятие создано", Toast.LENGTH_SHORT).show()
                         }
+                        refreshEvents()
+                        ad.dismiss()
                     }
                     connection.close()
                 }
@@ -289,6 +364,5 @@ class EventAdapter(
                 }
             }
         }
-        ad.dismiss()
     }
 }

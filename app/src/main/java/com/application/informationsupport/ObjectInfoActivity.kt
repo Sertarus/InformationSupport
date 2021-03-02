@@ -52,7 +52,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                 val connection = DatabaseConnector().createConnection()
                 val stmt = connection.createStatement()
                 val rs = stmt.executeQuery(
-                    "select * from ${type}s where name = '${intent.getStringExtra("name")}'"
+                    "select * from ${type}s where name = '${intent.getStringExtra("name")}' and deleted = '0'"
                 )
                 rs.next()
                 dataSet.add(ModelDataItem("Название $typeName", rs.getString("name")))
@@ -105,7 +105,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                             "join services s on s.idservice = u.service " +
                             "join districts dis on dis.iddistrict = u.district " +
                             "join devices dev on dev.iddevice = u.device " +
-                            "where login = '${intent.getStringExtra("name")}'"
+                            "where login = '${intent.getStringExtra("name")}' and deleted = '0'"
                 )
                 rs.next()
                 dataSet.add(ModelDataItem("Логин", rs.getString("login")))
@@ -182,7 +182,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                 val connection = DatabaseConnector().createConnection()
                 val datatypeRS = connection.createStatement().executeQuery(
                     "select * from" +
-                            " datatypes where name = '${intent.getStringExtra("name")}'"
+                            " datatypes where name = '${intent.getStringExtra("name")}' and deleted = '0'"
                 )
                 datatypeRS.next()
                 dataSet.add(ModelDataItem("Название", datatypeRS.getString("name")))
@@ -380,6 +380,67 @@ class ObjectInfoActivity : AppCompatActivity() {
                     val valueRS = connection.createStatement().executeQuery("select value from recordvalues where recordtype = '${recordTypesRS.getString("recordtype")}' and dataobject = '$idDataObject'")
                     valueRS.next()
                     dataSet.add(ModelDataItem(recordTypesRS.getString("name"), valueRS.getString("value")))
+                }
+                connection.close()
+            }
+            catch(e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            recyclerView.adapter = DataItemAdapter(this, dataSet)
+        }
+        if (type == "event") {
+            informationTV.text = "Информация о мероприятии:"
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val eventRS = connection.createStatement().executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
+                eventRS.next()
+                dataSet.add(ModelDataItem("Название", eventRS.getString("name")))
+                dataSet.add(ModelDataItem("Описание", eventRS.getString("description")))
+                dataSet.add(ModelDataItem("Дата начала", eventRS.getString("timestart").split(".")[0]))
+                dataSet.add(ModelDataItem("Дата окончания", eventRS.getString("timeend").split(".")[0]))
+                val userNameRS = connection.createStatement().executeQuery(
+                    "select login from users where iduser =" +
+                            " '${eventRS.getString("createdBy")}'"
+                )
+                userNameRS.next()
+                val createdUserName = userNameRS.getString("login")
+                dataSet.add(ModelDataItem("Создавший пользователь", createdUserName))
+                dataSet.add(
+                    ModelDataItem(
+                        "Дата создания",
+                        eventRS.getString("creationdate").split(".")[0]
+                    )
+                )
+                if (eventRS.getString("changedby") != null && eventRS.getString("changeddate") != null) {
+                    val changedUserNameStmt = connection.createStatement()
+                    val changedUserNameRS = changedUserNameStmt.executeQuery(
+                        "select login from users where iduser =" +
+                                " '${eventRS.getString("changedby")}'"
+                    )
+                    changedUserNameRS.next()
+                    val changedUserName = changedUserNameRS.getString("login")
+                    dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
+                    dataSet.add(
+                        ModelDataItem(
+                            "Дата последнего изменения",
+                            eventRS.getString("changeddate").split(".")[0]
+                        )
+                    )
+                }
+                dataSet.add(ModelDataItem("Привязанные службы", ""))
+                val serviceRS = connection.createStatement().executeQuery("select name from services where idservice in (select service from events_services where event = '${eventRS.getString("idevent")}' and deleted = '0')")
+                var counter = 1
+                while (serviceRS.next()) {
+                    dataSet.add(ModelDataItem("Служба $counter", serviceRS.getString("name")))
+                    counter++
+                }
+                dataSet.add(ModelDataItem("Привязанные районы", ""))
+                val districtRS = connection.createStatement().executeQuery("select name from districts where iddistrict in (select district from events_districts where event = '${eventRS.getString("idevent")}' and deleted = '0')")
+                counter = 1
+                while (districtRS.next()) {
+                    dataSet.add(ModelDataItem("Район $counter", districtRS.getString("name")))
+                    counter++
                 }
                 connection.close()
             }
