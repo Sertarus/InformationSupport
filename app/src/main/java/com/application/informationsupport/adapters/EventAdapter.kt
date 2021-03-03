@@ -207,8 +207,9 @@ class EventAdapter(
             val cDay = calendar.get(Calendar.DAY_OF_MONTH)
             val datePickerDialog = DatePickerDialog(context,
                 DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
-                    var formatMonth = month.toString()
-                    if (month < 10) formatMonth = "0$month"
+                    val correctMonth = (month + 1)
+                    var formatMonth = correctMonth.toString()
+                    if (correctMonth < 10) formatMonth = "0$correctMonth"
                     var formatDay = dayOfMonth.toString()
                     if (dayOfMonth < 10) formatDay = "0$dayOfMonth"
                     startDateET.text = SpannableStringBuilder("${year}-${formatMonth}-${formatDay}")
@@ -242,8 +243,9 @@ class EventAdapter(
             val cDay = calendar.get(Calendar.DAY_OF_MONTH)
             val datePickerDialog = DatePickerDialog(context,
                 DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
-                    var formatMonth = month.toString()
-                    if (month < 10) formatMonth = "0$month"
+                    val correctMonth = (month + 1)
+                    var formatMonth = correctMonth.toString()
+                    if (correctMonth < 10) formatMonth = "0$correctMonth"
                     var formatDay = dayOfMonth.toString()
                     if (dayOfMonth < 10) formatDay = "0$dayOfMonth"
                     endDateET.text = SpannableStringBuilder("${year}-${formatMonth}-${formatDay}")

@@ -8,6 +8,9 @@
     <item android:id="@+id/action_program"
         android:title="О программе"/>
 
+    <item android:id="@+id/action_full_search"
+        android:title="Расширенный поиск"/>
+
     <item android:id="@+id/action_logout"
         android:title="Выход"/>
 

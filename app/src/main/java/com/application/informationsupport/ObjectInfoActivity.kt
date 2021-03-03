@@ -450,6 +450,23 @@ class ObjectInfoActivity : AppCompatActivity() {
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
+        if (type == "currentEvent") {
+            informationTV.visibility = View.GONE
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val eventRS = connection.createStatement().executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
+                eventRS.next()
+                dataSet.add(ModelDataItem("Описание", eventRS.getString("description")))
+                dataSet.add(ModelDataItem("Дата начала", eventRS.getString("timestart").split(".")[0]))
+                dataSet.add(ModelDataItem("Дата окончания", eventRS.getString("timeend").split(".")[0]))
+                connection.close()
+            }
+            catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+            recyclerView.adapter = DataItemAdapter(this, dataSet)
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

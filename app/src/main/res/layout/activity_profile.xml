@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Информация о пользователе:"
+        android:text="Информация о текущей сессии:"
         android:textSize="25sp"
         android:textColor="@color/black"
         android:padding="20dp"/>
@@ -16,21 +16,22 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="20dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Служба:"
+            android:text="Логин пользователя:"
             android:textSize="18sp"
             android:textColor="@color/black"
             android:padding="10dp"/>
 
         <TextView
-            android:id="@+id/serviceTV"
+            android:id="@+id/loginTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Служба"
+            android:text="Логин"
             android:textSize="18sp"
             android:textColor="@color/black"
             android:padding="10dp"/>
@@ -41,113 +42,37 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="20dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Номер телефона:"
+            android:text="Идентификатор устройства:"
             android:textSize="18sp"
             android:textColor="@color/black"
             android:padding="10dp"/>
 
         <TextView
-            android:id="@+id/phoneNumberTV"
+            android:id="@+id/deviceIDTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Номер телефона"
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:padding="10dp"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Электронная почта:"
-            android:textSize="18sp"
-            android:textColor="@color/black"
-            android:padding="10dp"/>
-
-        <TextView
-            android:id="@+id/emailTV"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Электронная почта"
+            android:text="Идентификатор"
             android:textSize="18sp"
             android:textColor="@color/black"
             android:padding="10dp"/>
 
     </LinearLayout>
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Изменение информации:"
-        android:textSize="25sp"
-        android:textColor="@color/black"
-        android:padding="20dp"
-        android:id="@+id/changeInfoTV"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Новый номер телефона:"
-        android:id="@+id/newPhoneNumberTV"
-        android:textSize="18sp"
-        android:textColor="@color/black"
-        android:padding="10dp"/>
-
-    <com.google.android.material.textfield.TextInputEditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/phoneNumberET"
-        android:inputType="text"
-        android:hint="Номер телефона"
-        android:textSize="18sp"
-        android:layout_margin="10dp"/>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Сохранить"
-        android:layout_margin="10dp"
-        android:padding="10sp"
+        android:text="Отправить отчёт об ошибках"
         style="@style/Widget.AppCompat.Button.Colored"
-        android:id="@+id/phoneNumberSaveButton"
-        android:textSize="15sp" />
+        android:id="@+id/errorInfoButton"
+        android:textSize="15sp"
+        android:layout_marginTop="10dp"
+        android:layout_gravity="center"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Новая почта:"
-        android:textSize="18sp"
-        android:textColor="@color/black"
-        android:padding="10dp"
-        android:id="@+id/newEmailTV"/>
-
-    <com.google.android.material.textfield.TextInputEditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/emailET"
-        android:inputType="text"
-        android:hint="Электронная почта"
-        android:textSize="18sp"
-        android:layout_margin="10dp"/>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Сохранить"
-        android:layout_margin="10dp"
-        android:padding="10sp"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:id="@+id/emailSaveButton"
-        android:textSize="15sp" />
 </LinearLayout>

@@ -1,17 +1,20 @@
 package com.application.informationsupport
 
 import android.content.Intent
-import android.graphics.Rect
+import android.database.SQLException
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import android.view.*
-import android.view.View.OnLongClickListener
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.adapters.ObjectListAdapter
+import com.application.informationsupport.database.DatabaseConnector
+import java.util.*
+import kotlin.concurrent.schedule
 
 
 class MainActivity : AppCompatActivity() {
@@ -59,9 +62,47 @@ class MainActivity : AppCompatActivity() {
         })
         val menu_hotlist = menu.findItem(R.id.menu_hotlist).actionView
         ui_hot = menu_hotlist.findViewById(R.id.hotlist_hot)
-        updateHotCount(1)
+        try {
+            val connection = DatabaseConnector().createConnection()
+            val serviceIDRS = connection.createStatement().executeQuery("select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+            serviceIDRS.next()
+            val serviceID = serviceIDRS.getString("service")
+            val districtIDRS = connection.createStatement().executeQuery("select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+            districtIDRS.next()
+            val districtID = districtIDRS.getString("district")
+            val eventNumber = connection.createStatement().executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
+            eventNumber.next()
+            updateHotCount(eventNumber.getInt("total"))
+            connection.close()
+        }
+        catch (e: SQLException) {
+            Log.e("MyApp", e.toString())
+            e.printStackTrace()
+        }
+        Timer("UpdateNotification", false).schedule(10000) {
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val serviceIDRS = connection.createStatement().executeQuery("select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+                serviceIDRS.next()
+                val serviceID = serviceIDRS.getString("service")
+                val districtIDRS = connection.createStatement().executeQuery("select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+                districtIDRS.next()
+                val districtID = districtIDRS.getString("district")
+                val eventNumber = connection.createStatement().executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
+                eventNumber.next()
+                updateHotCount(eventNumber.getInt("total"))
+                connection.close()
+                invalidateOptionsMenu()
+            }
+            catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
+        }
         menu_hotlist.setOnClickListener {
-            Toast.makeText(this, "123", Toast.LENGTH_SHORT).show()
+            val newIntent = Intent(this, EventActivity::class.java)
+            newIntent.putExtra("name", intent.getStringExtra("name")!!)
+            this.startActivity(newIntent)
         }
         return super.onCreateOptionsMenu(menu)
     }
