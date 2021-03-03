@@ -105,7 +105,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                             "join services s on s.idservice = u.service " +
                             "join districts dis on dis.iddistrict = u.district " +
                             "join devices dev on dev.iddevice = u.device " +
-                            "where login = '${intent.getStringExtra("name")}' and deleted = '0'"
+                            "where login = '${intent.getStringExtra("name")}' and u.deleted = '0'"
                 )
                 rs.next()
                 dataSet.add(ModelDataItem("Логин", rs.getString("login")))

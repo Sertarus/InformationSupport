@@ -101,7 +101,7 @@ class SimpleItemAdapter(
                                 try {
                                     val connection = DatabaseConnector().createConnection()
                                     val ifNameExist = connection.createStatement()
-                                        .executeQuery("select * from ${currentType}s where name = '${nameET.text}' and delete = '0'")
+                                        .executeQuery("select * from ${currentType}s where name = '${nameET.text}' and deleted = '0'")
                                     if (ifNameExist.next()) {
                                         Toast.makeText(
                                             context,
