@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    app:cardUseCompatPadding="true"
+    app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="2dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/white"
+    app:cardUseCompatPadding="true"
     app:contentPadding="3dp">
 
     <LinearLayout
@@ -15,22 +15,22 @@
         android:orientation="horizontal">
 
         <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/imageView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
             android:padding="10dp"
-            android:src="@drawable/ic_datatype"
             android:scaleType="fitCenter"
-            android:id="@+id/imageView"/>
+            android:src="@drawable/ic_datatype" />
 
         <TextView
             android:id="@+id/nameTV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Название"
-            android:textSize="18sp"
+            android:layout_gravity="center_vertical"
+            android:text="@string/name"
             android:textColor="@color/black"
-            android:layout_gravity="center_vertical"/>
+            android:textSize="18sp" />
 
     </LinearLayout>
 
@@ -38,20 +38,20 @@
         android:id="@+id/creatorTV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Автор"
-        android:textColor="@color/black"
-        android:gravity="end"
         android:layout_gravity="center_vertical"
-        android:textSize="18sp"/>
+        android:gravity="end"
+        android:text="@string/creator"
+        android:textColor="@color/black"
+        android:textSize="18sp" />
 
     <TextView
         android:id="@+id/dateTV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Дата"
-        android:textColor="@color/black"
-        android:gravity="end"
         android:layout_gravity="bottom"
-        android:textSize="18sp"/>
+        android:gravity="end"
+        android:text="@string/date"
+        android:textColor="@color/black"
+        android:textSize="18sp" />
 
 </androidx.cardview.widget.CardView>

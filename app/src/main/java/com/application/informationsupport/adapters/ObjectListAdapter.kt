@@ -3,7 +3,6 @@ package com.application.informationsupport.adapters
 import android.app.Activity
 import android.content.Intent
 import android.database.SQLException
-import android.graphics.ColorSpace
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -11,19 +10,22 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.application.informationsupport.DataActivity
 import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
-import com.application.informationsupport.models.ModelDataObject
 import com.application.informationsupport.models.ModelObjectList
 
-class ObjectListAdapter(val context: Activity, var objectList: MutableList<ModelObjectList>, val currentUser: String) :
+class ObjectListAdapter(
+    val context: Activity,
+    var objectList: MutableList<ModelObjectList>,
+    val currentUser: String,
+    val isSearch: Boolean
+) :
     RecyclerView.Adapter<ObjectListAdapter.ObjectListHolder>() {
 
     var currentPath = mutableListOf<String>()
 
-    class ObjectListHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class ObjectListHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var typeIV: ImageView = itemView.findViewById(R.id.imageView)
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
         var creatorTV: TextView = itemView.findViewById(R.id.creatorTV)
@@ -31,19 +33,20 @@ class ObjectListAdapter(val context: Activity, var objectList: MutableList<Model
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ObjectListHolder {
-        val view = LayoutInflater.from(context).inflate(R.layout.row_data_object_short, parent, false)
+        val view =
+            LayoutInflater.from(context).inflate(R.layout.row_data_object_short, parent, false)
         return ObjectListHolder(view)
     }
 
     override fun getItemCount(): Int {
-        return if (context.title.toString() != "Информационное обеспечение" && (objectList.isEmpty() || objectList[0].name != "")) objectList.size +
+        return if (context.title.toString() != "Информационное обеспечение" && (objectList.isEmpty() || objectList[0].name != "") && !isSearch) objectList.size +
                 1 else objectList.size
     }
 
     override fun onBindViewHolder(holder: ObjectListHolder, position: Int) {
         val title = context.title.toString()
         val notRootScreen = title != "Информационное обеспечение"
-        if (notRootScreen && (objectList.isEmpty() || objectList[0].name != "")) {
+        if (notRootScreen && (objectList.isEmpty() || objectList[0].name != "") && !isSearch) {
             objectList.add(0, ModelObjectList("", "", "", false))
         }
         val name = objectList[position].name
@@ -55,24 +58,22 @@ class ObjectListAdapter(val context: Activity, var objectList: MutableList<Model
         holder.creatorTV.text = creator
         holder.dateTV.text = date
         if (isFolder) holder.typeIV.setImageResource(R.drawable.ic_folder)
-        else if (position != 0 || !notRootScreen) holder.typeIV.setImageResource(R.drawable.ic_object)
+        else if ((position != 0 || !notRootScreen) || isSearch) holder.typeIV.setImageResource(R.drawable.ic_object)
         else holder.typeIV.setImageResource(R.drawable.ic_arrow_back)
 
         holder.itemView.setOnClickListener {
-            if (position == 0 && notRootScreen) {
-                currentPath.removeAt(currentPath.size -1)
+            if (position == 0 && notRootScreen && !isSearch) {
+                currentPath.removeAt(currentPath.size - 1)
                 if (currentPath.isEmpty()) context.title = "Информационное обеспечение"
                 else {
                     context.title = currentPath[currentPath.size - 1]
                 }
                 refreshObjectList("")
-            }
-            else if (isFolder) {
+            } else if (isFolder) {
                 currentPath.add(holder.nameTV.text.toString())
                 context.title = holder.nameTV.text.toString()
                 refreshObjectList("")
-            }
-            else {
+            } else {
                 val intent = Intent(context, ObjectInfoActivity::class.java)
                 intent.putExtra("name", name)
                 intent.putExtra("type", "dataobject")
@@ -86,12 +87,14 @@ class ObjectListAdapter(val context: Activity, var objectList: MutableList<Model
         val dataSet = mutableListOf<ModelObjectList>()
         try {
             val connection = DatabaseConnector().createConnection()
-            val currentUserInfoRS = connection.createStatement().executeQuery("select * from users where login = '$currentUser'")
+            val currentUserInfoRS = connection.createStatement()
+                .executeQuery("select * from users where login = '$currentUser'")
             currentUserInfoRS.next()
             val currentUserService = currentUserInfoRS.getString("service")
             val currentUserDistrict = currentUserInfoRS.getString("district")
             if (context.title == "Информационное обеспечение") {
-                val branchRS = connection.createStatement().executeQuery("select * from branches where higherbranch is null and idbranch in (select branch from branches_services where service = '$currentUserService') and idbranch in (select branch from branches_districts where district = '$currentUserDistrict') and deleted = '0'  and name like '%$text%'")
+                val branchRS = connection.createStatement()
+                    .executeQuery("select * from branches where higherbranch is null and idbranch in (select branch from branches_services where service = '$currentUserService') and idbranch in (select branch from branches_districts where district = '$currentUserDistrict') and deleted = '0'  and name like '%$text%'")
                 while (branchRS.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -100,11 +103,18 @@ class ObjectListAdapter(val context: Activity, var objectList: MutableList<Model
                     )
                     nameSet.next()
                     val creatorName = nameSet.getString("login")
-                    dataSet.add(ModelObjectList(branchRS.getString("name"), creatorName, branchRS.getString("creationdate").split(".")[0], true))
+                    dataSet.add(
+                        ModelObjectList(
+                            branchRS.getString("name"),
+                            creatorName,
+                            branchRS.getString("creationdate").split(".")[0],
+                            true
+                        )
+                    )
                 }
-            }
-            else {
-                val branchRS = connection.createStatement().executeQuery("select * from branches where higherbranch in (select idbranch from branches where name = '${context.title}') and idbranch in (select branch from branches_services where service = '$currentUserService') and idbranch in (select branch from branches_districts where district = '$currentUserDistrict')  and deleted = '0'  and name like '%$text%'")
+            } else {
+                val branchRS = connection.createStatement()
+                    .executeQuery("select * from branches where higherbranch in (select idbranch from branches where name = '${context.title}') and idbranch in (select branch from branches_services where service = '$currentUserService') and idbranch in (select branch from branches_districts where district = '$currentUserDistrict')  and deleted = '0'  and name like '%$text%'")
                 while (branchRS.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -113,9 +123,17 @@ class ObjectListAdapter(val context: Activity, var objectList: MutableList<Model
                     )
                     nameSet.next()
                     val creatorName = nameSet.getString("login")
-                    dataSet.add(ModelObjectList(branchRS.getString("name"), creatorName, branchRS.getString("creationdate").split(".")[0], true))
+                    dataSet.add(
+                        ModelObjectList(
+                            branchRS.getString("name"),
+                            creatorName,
+                            branchRS.getString("creationdate").split(".")[0],
+                            true
+                        )
+                    )
                 }
-                val dataObjectRS = connection.createStatement().executeQuery("select name, createdby, creationdate from dataobjects where branch in (select idbranch from branches where name = '${context.title}') and deleted = '0'  and name like '%$text%'")
+                val dataObjectRS = connection.createStatement()
+                    .executeQuery("select name, createdby, creationdate from dataobjects where branch in (select idbranch from branches where name = '${context.title}') and deleted = '0'  and name like '%$text%'")
                 while (dataObjectRS.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -124,12 +142,17 @@ class ObjectListAdapter(val context: Activity, var objectList: MutableList<Model
                     )
                     nameSet.next()
                     val creatorName = nameSet.getString("login")
-                    dataSet.add(ModelObjectList(dataObjectRS.getString("name"), creatorName, dataObjectRS.getString("creationdate").split(".")[0]))
+                    dataSet.add(
+                        ModelObjectList(
+                            dataObjectRS.getString("name"),
+                            creatorName,
+                            dataObjectRS.getString("creationdate").split(".")[0]
+                        )
+                    )
                 }
             }
             connection.close()
-        }
-        catch (e: SQLException) {
+        } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()
         }

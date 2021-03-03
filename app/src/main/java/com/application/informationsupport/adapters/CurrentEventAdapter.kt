@@ -14,8 +14,10 @@ import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelSimpleInfo
 
-class CurrentEventAdapter(val context: Activity, var objectList: List<ModelSimpleInfo>,
-                          val currentUser: String):
+class CurrentEventAdapter(
+    val context: Activity, private var objectList: List<ModelSimpleInfo>,
+    private val currentUser: String
+) :
     RecyclerView.Adapter<CurrentEventAdapter.CurrentEventHolder>() {
 
     class CurrentEventHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -54,13 +56,16 @@ class CurrentEventAdapter(val context: Activity, var objectList: List<ModelSimpl
         val dataSet = mutableListOf<ModelSimpleInfo>()
         try {
             val connection = DatabaseConnector().createConnection()
-            val serviceIDRS = connection.createStatement().executeQuery("select service from users where login = '$currentUser' and deleted = '0'")
+            val serviceIDRS = connection.createStatement()
+                .executeQuery("select service from users where login = '$currentUser' and deleted = '0'")
             serviceIDRS.next()
             val serviceID = serviceIDRS.getString("service")
-            val districtIDRS = connection.createStatement().executeQuery("select district from users where login = '$currentUser' and deleted = '0'")
+            val districtIDRS = connection.createStatement()
+                .executeQuery("select district from users where login = '$currentUser' and deleted = '0'")
             districtIDRS.next()
             val districtID = districtIDRS.getString("district")
-            val eventsRS = connection.createStatement().executeQuery("select * from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
+            val eventsRS = connection.createStatement()
+                .executeQuery("select * from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
             while (eventsRS.next()) {
                 val nameSet = connection.createStatement().executeQuery(
                     "select login from users where iduser = '" +
@@ -68,11 +73,16 @@ class CurrentEventAdapter(val context: Activity, var objectList: List<ModelSimpl
                 )
                 nameSet.next()
                 val name = nameSet.getString("login")
-                dataSet.add(ModelSimpleInfo(eventsRS.getString("name"), name, eventsRS.getString("creationdate").split(".")[0]))
+                dataSet.add(
+                    ModelSimpleInfo(
+                        eventsRS.getString("name"),
+                        name,
+                        eventsRS.getString("creationdate").split(".")[0]
+                    )
+                )
             }
             connection.close()
-        }
-        catch (e: SQLException) {
+        } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()
         }

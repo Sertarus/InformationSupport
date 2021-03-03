@@ -3,12 +3,8 @@ package com.application.informationsupport
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
-import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import android.widget.TextView
-import com.application.informationsupport.models.ModelUserInfo
-import kotlin.math.log
 
 class ProfileActivity : AppCompatActivity() {
 

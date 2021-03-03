@@ -7,7 +7,6 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.*
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,14 +19,15 @@ import kotlin.concurrent.schedule
 class MainActivity : AppCompatActivity() {
 
     lateinit var recyclerView: RecyclerView
-    var hot_number = 0
-    var ui_hot: TextView? = null
+    private var hot_number = 0
+    private var ui_hot: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val adapter = ObjectListAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
-        recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
+        val adapter =
+            ObjectListAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, false)
+        recyclerView = findViewById(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter.refreshObjectList("")
@@ -42,20 +42,20 @@ class MainActivity : AppCompatActivity() {
         searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                    if (!TextUtils.isEmpty(query!!.trim())) {
-                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList(query)
-                    } else {
-                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
-                    }
+                if (!TextUtils.isEmpty(query!!.trim())) {
+                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList(query)
+                } else {
+                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
+                }
                 return false
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                    if (!TextUtils.isEmpty(newText!!.trim())) {
-                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList(newText)
-                    } else {
-                        (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
-                    }
+                if (!TextUtils.isEmpty(newText!!.trim())) {
+                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList(newText)
+                } else {
+                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
+                }
                 return false
             }
 
@@ -64,37 +64,43 @@ class MainActivity : AppCompatActivity() {
         ui_hot = menu_hotlist.findViewById(R.id.hotlist_hot)
         try {
             val connection = DatabaseConnector().createConnection()
-            val serviceIDRS = connection.createStatement().executeQuery("select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+            val serviceIDRS = connection.createStatement()
+                .executeQuery("select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
             serviceIDRS.next()
             val serviceID = serviceIDRS.getString("service")
-            val districtIDRS = connection.createStatement().executeQuery("select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+            val districtIDRS = connection.createStatement()
+                .executeQuery("select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
             districtIDRS.next()
             val districtID = districtIDRS.getString("district")
-            val eventNumber = connection.createStatement().executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
+            val eventNumber = connection.createStatement()
+                .executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
             eventNumber.next()
             updateHotCount(eventNumber.getInt("total"))
             connection.close()
-        }
-        catch (e: SQLException) {
+        } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()
         }
         Timer("UpdateNotification", false).schedule(10000) {
             try {
                 val connection = DatabaseConnector().createConnection()
-                val serviceIDRS = connection.createStatement().executeQuery("select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+                val serviceIDRS = connection.createStatement().executeQuery(
+                    "select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'"
+                )
                 serviceIDRS.next()
                 val serviceID = serviceIDRS.getString("service")
-                val districtIDRS = connection.createStatement().executeQuery("select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
+                val districtIDRS = connection.createStatement().executeQuery(
+                    "select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'"
+                )
                 districtIDRS.next()
                 val districtID = districtIDRS.getString("district")
-                val eventNumber = connection.createStatement().executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
+                val eventNumber = connection.createStatement()
+                    .executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
                 eventNumber.next()
                 updateHotCount(eventNumber.getInt("total"))
                 connection.close()
                 invalidateOptionsMenu()
-            }
-            catch (e: SQLException) {
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
@@ -130,13 +136,17 @@ class MainActivity : AppCompatActivity() {
         if (id == R.id.action_program) {
             val newIntent = Intent(this, ProfileActivity::class.java)
             newIntent.putExtra("name", intent.getStringExtra("name"))
-            newIntent.putExtra("isOwnProfile", "y")
+            startActivity(newIntent)
+        }
+        if (id == R.id.action_full_search) {
+            val newIntent = Intent(this, HumanSearchActivity::class.java)
+            newIntent.putExtra("name", intent.getStringExtra("name"))
             startActivity(newIntent)
         }
         return super.onOptionsItemSelected(item)
     }
 
-    fun updateHotCount(new_hot_number: Int) {
+    private fun updateHotCount(new_hot_number: Int) {
         hot_number = new_hot_number
         if (ui_hot == null) return
         runOnUiThread {

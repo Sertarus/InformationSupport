@@ -1,5 +1,5 @@
 package com.application.informationsupport.models
 
-data class ModelDataItem (
+data class ModelDataItem(
     var fieldName: String = "", var data: String = ""
 )

@@ -9,10 +9,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.R
 import com.application.informationsupport.models.ModelDataItem
 
-class DataItemAdapter (val context: Context, val itemList: List<ModelDataItem>) :
+class DataItemAdapter(val context: Context, private val itemList: List<ModelDataItem>) :
     RecyclerView.Adapter<DataItemAdapter.DataItemHolder>() {
 
-    class DataItemHolder (itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class DataItemHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var fieldTV: TextView = itemView.findViewById(R.id.fieldNameTV)
         var dataTV: TextView = itemView.findViewById(R.id.dataTV)
     }

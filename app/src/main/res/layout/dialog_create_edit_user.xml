@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <TextView
+        android:id="@+id/addTV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Добавить пользователя"
+        android:gravity="center_horizontal"
+        android:padding="10dp"
+        android:text="@string/addUser"
+        android:textAlignment="center"
         android:textColor="@color/colorAccent"
         android:textSize="16sp"
-        android:textStyle="bold"
-        android:textAlignment="center"
-        android:gravity="center_horizontal"
-        android:id="@+id/addTV"
-        android:padding="10dp"/>
+        android:textStyle="bold" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
@@ -21,11 +22,11 @@
         android:padding="10dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:id="@+id/loginET"
-            android:inputType="text"
-            android:hint="Логин"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/login"
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -35,11 +36,11 @@
         android:padding="10dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:id="@+id/passwordET"
-            android:inputType="text"
-            android:hint="Пароль"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/password"
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -49,11 +50,11 @@
         android:padding="10dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:id="@+id/fullnameET"
-            android:inputType="text"
-            android:hint="ФИО"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/fio"
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -63,11 +64,11 @@
         android:padding="10dp">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:id="@+id/emailET"
-            android:inputType="text"
-            android:hint="Электронная почта"/>
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/email"
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -77,11 +78,11 @@
         android:padding="10dp">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/phoneET"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/phoneET"
-            android:inputType="text"
-            android:hint="Номер телефона"/>
+            android:hint="@string/phoneNumber"
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -89,29 +90,25 @@
         android:id="@+id/spinnerRole"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        />
+        android:padding="10dp" />
 
     <Spinner
         android:id="@+id/spinnerService"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        />
+        android:padding="10dp" />
 
     <Spinner
         android:id="@+id/spinnerDistrict"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        />
+        android:padding="10dp" />
 
     <Spinner
         android:id="@+id/spinnerDevice"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        />
+        android:padding="10dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -120,24 +117,25 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Пользователь заблокирован: "
-            android:textSize="18sp"
+            android:padding="10dp"
+            android:text="@string/UserBlocked"
             android:textColor="@color/black"
-            android:padding="10dp"/>
+            android:textSize="18sp" />
+
         <CheckBox
             android:id="@+id/checkBoxBlocked"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
 
     <Button
         android:id="@+id/createUserButton"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Добавить"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        android:text="@string/add" />
 
 </LinearLayout>

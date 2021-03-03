@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context=".ProfileActivity">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Информация о текущей сессии:"
-        android:textSize="25sp"
+        android:padding="20dp"
+        android:text="@string/CurrentSessionInfo"
         android:textColor="@color/black"
-        android:padding="20dp"/>
+        android:textSize="25sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,19 +23,19 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Логин пользователя:"
-            android:textSize="18sp"
+            android:padding="10dp"
+            android:text="@string/UserLogin"
             android:textColor="@color/black"
-            android:padding="10dp"/>
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/loginTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Логин"
-            android:textSize="18sp"
+            android:padding="10dp"
+            android:text="@string/Login"
             android:textColor="@color/black"
-            android:padding="10dp"/>
+            android:textSize="18sp" />
 
     </LinearLayout>
 
@@ -48,31 +49,31 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Идентификатор устройства:"
-            android:textSize="18sp"
+            android:padding="10dp"
+            android:text="@string/deviceId"
             android:textColor="@color/black"
-            android:padding="10dp"/>
+            android:textSize="18sp" />
 
         <TextView
             android:id="@+id/deviceIDTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Идентификатор"
-            android:textSize="18sp"
+            android:padding="10dp"
+            android:text="@string/Id"
             android:textColor="@color/black"
-            android:padding="10dp"/>
+            android:textSize="18sp" />
 
     </LinearLayout>
 
 
     <Button
+        android:id="@+id/errorInfoButton"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Отправить отчёт об ошибках"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:id="@+id/errorInfoButton"
-        android:textSize="15sp"
+        android:layout_gravity="center"
         android:layout_marginTop="10dp"
-        android:layout_gravity="center"/>
+        android:text="@string/InfoError"
+        android:textSize="15sp" />
 
 </LinearLayout>

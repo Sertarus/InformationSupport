@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.adapters.CurrentEventAdapter
 
 class EventActivity : AppCompatActivity() {
-    lateinit var recyclerView: RecyclerView
+    private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,7 +16,7 @@ class EventActivity : AppCompatActivity() {
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         title = "Текущие мероприятия"
         val adapter = CurrentEventAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
-        recyclerView = findViewById<RecyclerView>(R.id.dataRecyclerView)
+        recyclerView = findViewById(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter.refreshCurrentEvents()

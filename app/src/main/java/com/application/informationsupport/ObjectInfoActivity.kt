@@ -222,7 +222,9 @@ class ObjectInfoActivity : AppCompatActivity() {
                 val recordsRS = connection.createStatement().executeQuery(
                     "select d.name as datatype, r.name as record, dataorder from" +
                             " datatypes_recordtypes dr join datatypes d on d.iddatatype = dr.datatype" +
-                            " join recordtypes r on r.idrecordtype = dr.recordtype where d.name = '${intent.getStringExtra("name")}' order by dataorder asc"
+                            " join recordtypes r on r.idrecordtype = dr.recordtype where d.name = '${intent.getStringExtra(
+                                "name"
+                            )}' order by dataorder asc"
                 )
                 var counter = 1
                 while (recordsRS.next()) {
@@ -247,13 +249,17 @@ class ObjectInfoActivity : AppCompatActivity() {
                 branchRS.next()
                 dataSet.add(ModelDataItem("Название", branchRS.getString("name")))
                 var higherBranchName = "-"
-                if (branchRS.getString("higherbranch") != null){
-                    val higherBranchSet = connection.createStatement().executeQuery("select name from branches where idbranch = '${branchRS.getString("higherbranch")}'")
+                if (branchRS.getString("higherbranch") != null) {
+                    val higherBranchSet = connection.createStatement().executeQuery(
+                        "select name from branches where idbranch = '${branchRS.getString("higherbranch")}'"
+                    )
                     if (higherBranchSet.next()) {
                         higherBranchName = higherBranchSet.getString("name")
                     }
                 }
-                val datatypeSet = connection.createStatement().executeQuery("select name from datatypes where iddatatype = '${branchRS.getString("datatype")}'")
+                val datatypeSet = connection.createStatement().executeQuery(
+                    "select name from datatypes where iddatatype = '${branchRS.getString("datatype")}'"
+                )
                 datatypeSet.next()
                 val datatypeName = datatypeSet.getString("name")
                 dataSet.add(ModelDataItem("Находится в ветке", higherBranchName))
@@ -289,22 +295,29 @@ class ObjectInfoActivity : AppCompatActivity() {
                     )
                 }
                 dataSet.add(ModelDataItem("Привязанные службы", ""))
-                val serviceRS = connection.createStatement().executeQuery("select name from services where idservice in (select service from branches_services where branch = '${branchRS.getString("idbranch")}')")
+                val serviceRS = connection.createStatement().executeQuery(
+                    "select name from services where idservice in (select service from branches_services where branch = '${branchRS.getString(
+                        "idbranch"
+                    )}')"
+                )
                 var counter = 1
                 while (serviceRS.next()) {
                     dataSet.add(ModelDataItem("Служба $counter", serviceRS.getString("name")))
                     counter++
                 }
                 dataSet.add(ModelDataItem("Привязанные районы", ""))
-                val districtRS = connection.createStatement().executeQuery("select name from districts where iddistrict in (select district from branches_districts where branch = '${branchRS.getString("idbranch")}')")
+                val districtRS = connection.createStatement().executeQuery(
+                    "select name from districts where iddistrict in (select district from branches_districts where branch = '${branchRS.getString(
+                        "idbranch"
+                    )}')"
+                )
                 counter = 1
                 while (districtRS.next()) {
                     dataSet.add(ModelDataItem("Район $counter", districtRS.getString("name")))
                     counter++
                 }
                 connection.close()
-            }
-            catch (e: SQLException) {
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
@@ -317,7 +330,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                 val dataObjectRS = connection.createStatement()
                     .executeQuery("select * from dataobjects where name = '${intent.getStringExtra("name")}' and deleted = '0'")
                 dataObjectRS.next()
-                if(intent.getBooleanExtra("isAdmin", false)) {
+                if (intent.getBooleanExtra("isAdmin", false)) {
                     informationTV.text = "Информация об объекте:"
                     informationTV.visibility = View.VISIBLE
                     dataSet.add(ModelDataItem("Название", dataObjectRS.getString("name")))
@@ -349,7 +362,12 @@ class ObjectInfoActivity : AppCompatActivity() {
                         )
                         changedUserNameRS.next()
                         val changedUserName = changedUserNameRS.getString("login")
-                        dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
+                        dataSet.add(
+                            ModelDataItem(
+                                "Последний изменивший пользователь",
+                                changedUserName
+                            )
+                        )
                         dataSet.add(
                             ModelDataItem(
                                 "Дата последнего изменения",
@@ -377,13 +395,21 @@ class ObjectInfoActivity : AppCompatActivity() {
                 val recordTypesRS = connection.createStatement()
                     .executeQuery("select recordtype, r.name, dataorder, dr.deleted from datatypes_recordtypes dr join recordtypes r on r.idrecordtype = dr.recordtype where datatype = '$idDataType' and dr.deleted = '0' order by dataorder")
                 while (recordTypesRS.next()) {
-                    val valueRS = connection.createStatement().executeQuery("select value from recordvalues where recordtype = '${recordTypesRS.getString("recordtype")}' and dataobject = '$idDataObject'")
+                    val valueRS = connection.createStatement().executeQuery(
+                        "select value from recordvalues where recordtype = '${recordTypesRS.getString(
+                            "recordtype"
+                        )}' and dataobject = '$idDataObject'"
+                    )
                     valueRS.next()
-                    dataSet.add(ModelDataItem(recordTypesRS.getString("name"), valueRS.getString("value")))
+                    dataSet.add(
+                        ModelDataItem(
+                            recordTypesRS.getString("name"),
+                            valueRS.getString("value")
+                        )
+                    )
                 }
                 connection.close()
-            }
-            catch(e: SQLException) {
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
@@ -393,12 +419,23 @@ class ObjectInfoActivity : AppCompatActivity() {
             informationTV.text = "Информация о мероприятии:"
             try {
                 val connection = DatabaseConnector().createConnection()
-                val eventRS = connection.createStatement().executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
+                val eventRS = connection.createStatement()
+                    .executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
                 eventRS.next()
                 dataSet.add(ModelDataItem("Название", eventRS.getString("name")))
                 dataSet.add(ModelDataItem("Описание", eventRS.getString("description")))
-                dataSet.add(ModelDataItem("Дата начала", eventRS.getString("timestart").split(".")[0]))
-                dataSet.add(ModelDataItem("Дата окончания", eventRS.getString("timeend").split(".")[0]))
+                dataSet.add(
+                    ModelDataItem(
+                        "Дата начала",
+                        eventRS.getString("timestart").split(".")[0]
+                    )
+                )
+                dataSet.add(
+                    ModelDataItem(
+                        "Дата окончания",
+                        eventRS.getString("timeend").split(".")[0]
+                    )
+                )
                 val userNameRS = connection.createStatement().executeQuery(
                     "select login from users where iduser =" +
                             " '${eventRS.getString("createdBy")}'"
@@ -429,22 +466,29 @@ class ObjectInfoActivity : AppCompatActivity() {
                     )
                 }
                 dataSet.add(ModelDataItem("Привязанные службы", ""))
-                val serviceRS = connection.createStatement().executeQuery("select name from services where idservice in (select service from events_services where event = '${eventRS.getString("idevent")}' and deleted = '0')")
+                val serviceRS = connection.createStatement().executeQuery(
+                    "select name from services where idservice in (select service from events_services where event = '${eventRS.getString(
+                        "idevent"
+                    )}' and deleted = '0')"
+                )
                 var counter = 1
                 while (serviceRS.next()) {
                     dataSet.add(ModelDataItem("Служба $counter", serviceRS.getString("name")))
                     counter++
                 }
                 dataSet.add(ModelDataItem("Привязанные районы", ""))
-                val districtRS = connection.createStatement().executeQuery("select name from districts where iddistrict in (select district from events_districts where event = '${eventRS.getString("idevent")}' and deleted = '0')")
+                val districtRS = connection.createStatement().executeQuery(
+                    "select name from districts where iddistrict in (select district from events_districts where event = '${eventRS.getString(
+                        "idevent"
+                    )}' and deleted = '0')"
+                )
                 counter = 1
                 while (districtRS.next()) {
                     dataSet.add(ModelDataItem("Район $counter", districtRS.getString("name")))
                     counter++
                 }
                 connection.close()
-            }
-            catch(e: SQLException) {
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
@@ -454,14 +498,24 @@ class ObjectInfoActivity : AppCompatActivity() {
             informationTV.visibility = View.GONE
             try {
                 val connection = DatabaseConnector().createConnection()
-                val eventRS = connection.createStatement().executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
+                val eventRS = connection.createStatement()
+                    .executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
                 eventRS.next()
                 dataSet.add(ModelDataItem("Описание", eventRS.getString("description")))
-                dataSet.add(ModelDataItem("Дата начала", eventRS.getString("timestart").split(".")[0]))
-                dataSet.add(ModelDataItem("Дата окончания", eventRS.getString("timeend").split(".")[0]))
+                dataSet.add(
+                    ModelDataItem(
+                        "Дата начала",
+                        eventRS.getString("timestart").split(".")[0]
+                    )
+                )
+                dataSet.add(
+                    ModelDataItem(
+                        "Дата окончания",
+                        eventRS.getString("timeend").split(".")[0]
+                    )
+                )
                 connection.close()
-            }
-            catch (e: SQLException) {
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }

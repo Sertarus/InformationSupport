@@ -4,16 +4,19 @@ import android.app.Activity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatCheckBox
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.R
 
-class CheckAdapter (val context: Activity, var checkList: MutableList<Pair<String, Boolean>>, val type: String) : RecyclerView.Adapter<CheckAdapter.CheckHolder>() {
+class CheckAdapter(
+    val context: Activity,
+    var checkList: MutableList<Pair<String, Boolean>>,
+    val type: String
+) : RecyclerView.Adapter<CheckAdapter.CheckHolder>() {
 
-    class CheckHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+    class CheckHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
         var imageView: ImageView = itemView.findViewById(R.id.imageView)
         var checkbox: AppCompatCheckBox = itemView.findViewById(R.id.checkbox)

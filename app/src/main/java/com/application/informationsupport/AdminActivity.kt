@@ -30,29 +30,29 @@ import java.util.*
 
 class AdminActivity : AppCompatActivity() {
 
-    val CAMERA_REQUEST_CODE = 100
-    val STORAGE_REQUEST_CODE = 200
-    val IMAGE_PICK_GALLERY_CODE = 300
-    val IMAGE_PICK_CAMERA_CODE = 400
+    private val CAMERA_REQUEST_CODE = 100
+    private val STORAGE_REQUEST_CODE = 200
+    private val IMAGE_PICK_GALLERY_CODE = 300
+    private val IMAGE_PICK_CAMERA_CODE = 400
 
     private var currentData = ""
-    var serviceAdapter = SimpleItemAdapter(
+    private var serviceAdapter = SimpleItemAdapter(
         this, mutableListOf(),
         "", currentData
     )
-    var userAdapter = UserAdapter(this, mutableListOf(), "")
-    var datatypeAdapter = DataTypeAdapter(this, mutableListOf(), "")
-    var branchAdapter = BranchAdapter(this, mutableListOf(), "")
-    var dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), "")
-    var eventAdapter = EventAdapter(this, mutableListOf(), "")
-    lateinit var recyclerView: RecyclerView
+    private var userAdapter = UserAdapter(this, mutableListOf(), "")
+    private var datatypeAdapter = DataTypeAdapter(this, mutableListOf(), "")
+    private var branchAdapter = BranchAdapter(this, mutableListOf(), "")
+    private var dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), "")
+    private var eventAdapter = EventAdapter(this, mutableListOf(), "")
+    private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_admin)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         title = "Панель администратора"
-        val configuration = this.getResources().getConfiguration()
+        val configuration = this.getResources().configuration
         val locale = Locale("ru", "RU")
         configuration.setLocale(locale)
         configuration.setLayoutDirection(locale)

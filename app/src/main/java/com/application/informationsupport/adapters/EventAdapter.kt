@@ -80,16 +80,20 @@ class EventAdapter(
                             )
                             rs.next()
                             val creatorID = rs.getString("iduser")
-                            val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '$name' and deleted = '0'")
+                            val eventIDRS = connection.createStatement()
+                                .executeQuery("select idevent from events where name = '$name' and deleted = '0'")
                             eventIDRS.next()
                             val eventID = eventIDRS.getString("idevent")
-                            connection.createStatement().executeQuery("update events set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where idevent = '$eventID'")
-                            connection.createStatement().executeQuery("update events_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
-                            connection.createStatement().executeQuery("update events_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
-                            Toast.makeText(context, "Мероприятие удалено", Toast.LENGTH_SHORT).show()
+                            connection.createStatement()
+                                .executeQuery("update events set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where idevent = '$eventID'")
+                            connection.createStatement()
+                                .executeQuery("update events_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                            connection.createStatement()
+                                .executeQuery("update events_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                            Toast.makeText(context, "Мероприятие удалено", Toast.LENGTH_SHORT)
+                                .show()
                             connection.close()
-                        }
-                        catch (e: SQLException) {
+                        } catch (e: SQLException) {
                             Log.e("MyApp", e.toString())
                             e.printStackTrace()
                         }
@@ -115,11 +119,17 @@ class EventAdapter(
                 )
                 nameSet.next()
                 val name = nameSet.getString("login")
-                dataSet.add(ModelEvent(rs.getString("name"), name, rs.getString("timestart").split(".")[0], rs.getString("timeend").split(".")[0]))
+                dataSet.add(
+                    ModelEvent(
+                        rs.getString("name"),
+                        name,
+                        rs.getString("timestart").split(".")[0],
+                        rs.getString("timeend").split(".")[0]
+                    )
+                )
             }
             connection.close()
-        }
-        catch (e: SQLException) {
+        } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()
         }
@@ -146,13 +156,15 @@ class EventAdapter(
         val addButton = view.findViewById<Button>(R.id.createEventButton)
         try {
             val connection = DatabaseConnector().createConnection()
-            val servicesRS = connection.createStatement().executeQuery("select name from services where deleted = '0'")
+            val servicesRS = connection.createStatement()
+                .executeQuery("select name from services where deleted = '0'")
             val serviceData = mutableListOf<Pair<String, Boolean>>()
             while (servicesRS.next()) {
                 serviceData.add(Pair(servicesRS.getString("name"), false))
             }
             serviceRV.adapter = CheckAdapter(context, serviceData, "service")
-            val districtsRS = connection.createStatement().executeQuery("select name from districts where deleted = '0'")
+            val districtsRS = connection.createStatement()
+                .executeQuery("select name from districts where deleted = '0'")
             val districtData = mutableListOf<Pair<String, Boolean>>()
             while (districtsRS.next()) {
                 districtData.add(Pair(districtsRS.getString("name"), false))
@@ -172,7 +184,11 @@ class EventAdapter(
                 endDateET.text = SpannableStringBuilder(endTimestamp.split(" ")[0])
                 endTimeET.text = SpannableStringBuilder(endTimestamp.split(" ")[1])
                 descriptionET.text = SpannableStringBuilder(eventInfoRS.getString("description"))
-                val checkedServicesRS = connection.createStatement().executeQuery("select name from services where idservice in (select service from events_services where event = '${eventInfoRS.getString("idevent")}' and deleted = '0')")
+                val checkedServicesRS = connection.createStatement().executeQuery(
+                    "select name from services where idservice in (select service from events_services where event = '${eventInfoRS.getString(
+                        "idevent"
+                    )}' and deleted = '0')"
+                )
                 while (checkedServicesRS.next()) {
                     for (i in 0 until serviceData.size) {
                         val name = serviceData[i].first
@@ -183,7 +199,11 @@ class EventAdapter(
                     }
                 }
                 serviceRV.adapter = CheckAdapter(context, serviceData, "service")
-                val checkedDistrictsRS = connection.createStatement().executeQuery("select name from districts where iddistrict in (select district from events_districts where event = '${eventInfoRS.getString("idevent")}' and deleted = '0')")
+                val checkedDistrictsRS = connection.createStatement().executeQuery(
+                    "select name from districts where iddistrict in (select district from events_districts where event = '${eventInfoRS.getString(
+                        "idevent"
+                    )}' and deleted = '0')"
+                )
                 while (checkedDistrictsRS.next()) {
                     for (i in 0 until districtData.size) {
                         val name = districtData[i].first
@@ -205,7 +225,8 @@ class EventAdapter(
             val cYear = calendar.get(Calendar.YEAR)
             val cMonth = calendar.get(Calendar.MONTH)
             val cDay = calendar.get(Calendar.DAY_OF_MONTH)
-            val datePickerDialog = DatePickerDialog(context,
+            val datePickerDialog = DatePickerDialog(
+                context,
                 DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
                     val correctMonth = (month + 1)
                     var formatMonth = correctMonth.toString()
@@ -241,7 +262,8 @@ class EventAdapter(
             val cYear = calendar.get(Calendar.YEAR)
             val cMonth = calendar.get(Calendar.MONTH)
             val cDay = calendar.get(Calendar.DAY_OF_MONTH)
-            val datePickerDialog = DatePickerDialog(context,
+            val datePickerDialog = DatePickerDialog(
+                context,
                 DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
                     val correctMonth = (month + 1)
                     var formatMonth = correctMonth.toString()
@@ -292,25 +314,33 @@ class EventAdapter(
                 }
             }
             if (nameET.text.length !in 1..20) {
-                Toast.makeText(context, "Длина названия должна быть от 1 до 20 символов", Toast.LENGTH_SHORT).show()
-            }
-            else if (descriptionET.text.length !in 1..200) {
-                Toast.makeText(context, "Длина описания должна быть от 1 до 200 символов", Toast.LENGTH_SHORT).show()
-            }
-            else if (!chosenService) {
+                Toast.makeText(
+                    context,
+                    "Длина названия должна быть от 1 до 20 символов",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else if (descriptionET.text.length !in 1..200) {
+                Toast.makeText(
+                    context,
+                    "Длина описания должна быть от 1 до 200 символов",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else if (!chosenService) {
                 Toast.makeText(context, "Не выбрано ни одной службы", Toast.LENGTH_SHORT).show()
-            }
-            else if (!chosenDistrict) {
+            } else if (!chosenDistrict) {
                 Toast.makeText(context, "Не выбрано ни одного района", Toast.LENGTH_SHORT).show()
-            }
-            else {
+            } else {
                 try {
                     val connection = DatabaseConnector().createConnection()
-                    val ifNameExistRS = connection.createStatement().executeQuery("select * from events where name = '${nameET.text}' and deleted = '0'")
+                    val ifNameExistRS = connection.createStatement()
+                        .executeQuery("select * from events where name = '${nameET.text}' and deleted = '0'")
                     if (!isEdit && ifNameExistRS.next()) {
-                        Toast.makeText(context, "Мероприятие с таким названием уже существует", Toast.LENGTH_SHORT).show()
-                    }
-                    else {
+                        Toast.makeText(
+                            context,
+                            "Мероприятие с таким названием уже существует",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
                         val rs = connection.createStatement().executeQuery(
                             "select iduser from users where" +
                                     " login = '$currentUser'"
@@ -318,17 +348,22 @@ class EventAdapter(
                         rs.next()
                         val creatorID = rs.getString("iduser")
                         if (isEdit) {
-                            val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '$chosenEventName' and deleted = '0'")
+                            val eventIDRS = connection.createStatement()
+                                .executeQuery("select idevent from events where name = '$chosenEventName' and deleted = '0'")
                             eventIDRS.next()
                             val eventID = eventIDRS.getString("idevent")
-                            connection.createStatement().executeQuery("update events set name = '${nameET.text}', description = '${descriptionET.text}', timestart = TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), timeend = TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), changedby = '$creatorID', changeddate = SYSTIMESTAMP where idevent = '$eventID'")
-                            connection.createStatement().executeQuery("update events_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
-                            connection.createStatement().executeQuery("update events_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                            connection.createStatement()
+                                .executeQuery("update events set name = '${nameET.text}', description = '${descriptionET.text}', timestart = TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), timeend = TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), changedby = '$creatorID', changeddate = SYSTIMESTAMP where idevent = '$eventID'")
+                            connection.createStatement()
+                                .executeQuery("update events_services set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                            connection.createStatement()
+                                .executeQuery("update events_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where event = '$eventID'")
+                        } else {
+                            connection.createStatement()
+                                .executeQuery("insert into events (name, description, timestart, timeend, createdby, creationdate) values ('${nameET.text}', '${descriptionET.text}', TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), '$creatorID', SYSTIMESTAMP)")
                         }
-                        else {
-                            connection.createStatement().executeQuery("insert into events (name, description, timestart, timeend, createdby, creationdate) values ('${nameET.text}', '${descriptionET.text}', TO_TIMESTAMP('${startDateET.text} ${startTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), TO_TIMESTAMP('${endDateET.text} ${endTimeET.text}.000000000', 'YYYY-MM-DD HH24:MI:SS:FF'), '$creatorID', SYSTIMESTAMP)")
-                        }
-                        val eventIDRS = connection.createStatement().executeQuery("select idevent from events where name = '${nameET.text}' and deleted = '0'")
+                        val eventIDRS = connection.createStatement()
+                            .executeQuery("select idevent from events where name = '${nameET.text}' and deleted = '0'")
                         eventIDRS.next()
                         val eventID = eventIDRS.getString("idevent")
                         (serviceRV.adapter as CheckAdapter).checkList.forEach {
@@ -337,7 +372,8 @@ class EventAdapter(
                                     .executeQuery("select idservice from services where name = '${it.first}'")
                                 serviceIDRS.next()
                                 val serviceID = serviceIDRS.getString("idservice")
-                                connection.createStatement().executeQuery("insert into events_services (event, service, createdby, creationdate) values ('$eventID', '$serviceID', '$creatorID', SYSTIMESTAMP)")
+                                connection.createStatement()
+                                    .executeQuery("insert into events_services (event, service, createdby, creationdate) values ('$eventID', '$serviceID', '$creatorID', SYSTIMESTAMP)")
                             }
                         }
                         (districtRV.adapter as CheckAdapter).checkList.forEach {
@@ -346,21 +382,22 @@ class EventAdapter(
                                     .executeQuery("select iddistrict from districts where name = '${it.first}'")
                                 districtIDRS.next()
                                 val districtID = districtIDRS.getString("iddistrict")
-                                connection.createStatement().executeQuery("insert into events_districts (event, district, createdby, creationdate) values ('$eventID', '$districtID', '$creatorID', SYSTIMESTAMP)")
+                                connection.createStatement()
+                                    .executeQuery("insert into events_districts (event, district, createdby, creationdate) values ('$eventID', '$districtID', '$creatorID', SYSTIMESTAMP)")
                             }
                         }
                         if (isEdit) {
-                            Toast.makeText(context, "Мероприятие изменено", Toast.LENGTH_SHORT).show()
-                        }
-                        else {
-                            Toast.makeText(context, "Мероприятие создано", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Мероприятие изменено", Toast.LENGTH_SHORT)
+                                .show()
+                        } else {
+                            Toast.makeText(context, "Мероприятие создано", Toast.LENGTH_SHORT)
+                                .show()
                         }
                         refreshEvents()
                         ad.dismiss()
                     }
                     connection.close()
-                }
-                catch (e: SQLException) {
+                } catch (e: SQLException) {
                     Log.e("MyApp", e.toString())
                     e.printStackTrace()
                 }

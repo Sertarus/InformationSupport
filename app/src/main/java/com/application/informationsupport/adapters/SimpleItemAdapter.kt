@@ -18,9 +18,9 @@ import com.application.informationsupport.models.ModelSimpleInfo
 
 class SimpleItemAdapter(
     val context: Activity,
-    var objectList: List<ModelSimpleInfo>,
-    val currentUser: String,
-    val currentType: String
+    private var objectList: List<ModelSimpleInfo>,
+    private val currentUser: String,
+    private val currentType: String
 ) :
     RecyclerView.Adapter<SimpleItemAdapter.SimpleItemHolder>() {
 
@@ -100,11 +100,15 @@ class SimpleItemAdapter(
                             if (nameET.text.toString().length in 1..40) {
                                 try {
                                     val connection = DatabaseConnector().createConnection()
-                                    val ifNameExist = connection.createStatement().executeQuery("select * from ${currentType}s where name = '${nameET.text}' and delete = '0'")
+                                    val ifNameExist = connection.createStatement()
+                                        .executeQuery("select * from ${currentType}s where name = '${nameET.text}' and delete = '0'")
                                     if (ifNameExist.next()) {
-                                        Toast.makeText(context, "Объект с таким именем уже существует", Toast.LENGTH_SHORT).show()
-                                    }
-                                    else {
+                                        Toast.makeText(
+                                            context,
+                                            "Объект с таким именем уже существует",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
                                         val idStmt = connection.createStatement()
                                         val rs = idStmt.executeQuery(
                                             "select iduser from users where" +
@@ -130,7 +134,11 @@ class SimpleItemAdapter(
                                                 changeTypeString = "Устройство изменено"
                                             }
                                         }
-                                        Toast.makeText(context, changeTypeString, Toast.LENGTH_SHORT)
+                                        Toast.makeText(
+                                            context,
+                                            changeTypeString,
+                                            Toast.LENGTH_SHORT
+                                        )
                                             .show()
                                         refreshSimpleInfo()
                                         ad.dismiss()
@@ -141,8 +149,7 @@ class SimpleItemAdapter(
                                     Log.e("MyApp", e.toString())
                                     e.printStackTrace()
                                 }
-                            }
-                            else {
+                            } else {
                                 var genitiveTypeString = ""
                                 when (currentType) {
                                     "service" -> {
@@ -155,8 +162,10 @@ class SimpleItemAdapter(
                                         genitiveTypeString = "устройства"
                                     }
                                 }
-                                Toast.makeText(context, "Недопустимое имя $genitiveTypeString",
-                                    Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context, "Недопустимое имя $genitiveTypeString",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     }
@@ -207,7 +216,8 @@ class SimpleItemAdapter(
         val dataSet = mutableListOf<ModelSimpleInfo>()
         try {
             val connection = DatabaseConnector().createConnection()
-            val rs = connection.createStatement().executeQuery("select * from ${currentType}s where deleted = '0'")
+            val rs = connection.createStatement()
+                .executeQuery("select * from ${currentType}s where deleted = '0'")
             while (rs.next()) {
                 val nameSet = connection.createStatement().executeQuery(
                     "select login from users where iduser = '" +
@@ -223,7 +233,7 @@ class SimpleItemAdapter(
                     )
                 )
             }
-            connection.close();
+            connection.close()
         } catch (e: SQLException) {
             Log.e("MyApp", e.toString())
             e.printStackTrace()

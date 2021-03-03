@@ -11,34 +11,34 @@
         android:orientation="vertical">
 
         <TextView
+            android:id="@+id/informationTV"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="10dp"
             android:text=""
-            android:textSize="24sp"
             android:textColor="@color/black"
-            android:id="@+id/informationTV"
-            android:padding="10dp"/>
+            android:textSize="24sp" />
 
         <LinearLayout
+            android:id="@+id/dataLL"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/dataLL">
+            android:orientation="horizontal">
 
             <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
                 android:padding="20dp"
-                android:src="@drawable/ic_photo"
                 android:scaleType="fitCenter"
-                android:id="@+id/imageView"/>
+                android:src="@drawable/ic_photo" />
 
             <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/dataItemRecyclerView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/dataItemRecyclerView"
-                android:layout_margin="20dp"/>
+                android:layout_margin="20dp" />
 
         </LinearLayout>
 

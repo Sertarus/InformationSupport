@@ -3,142 +3,143 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Добавить мероприятие"
-        android:textColor="@color/colorAccent"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textAlignment="center"
-        android:gravity="center_horizontal"
-        android:id="@+id/addTV"/>
+        android:orientation="vertical">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputEditText
+        <TextView
+            android:id="@+id/addTV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/nameET"
-            android:inputType="text"
-            android:hint="Название"/>
+            android:gravity="center_horizontal"
+            android:text="@string/addEvent"
+            android:textAlignment="center"
+            android:textColor="@color/colorAccent"
+            android:textSize="16sp"
+            android:textStyle="bold" />
 
-    </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/nameET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/name"
+                android:inputType="text" />
 
-        <com.google.android.material.textfield.TextInputEditText
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/startDateET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:cursorVisible="false"
+                android:focusable="false"
+                android:hint="@string/startDate" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/startTimeET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:cursorVisible="false"
+                android:focusable="false"
+                android:hint="@string/startTime" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/endDateET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:cursorVisible="false"
+                android:focusable="false"
+                android:hint="@string/endDate" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/endTimeET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:cursorVisible="false"
+                android:focusable="false"
+                android:hint="@string/endTime" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/descriptionET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/description" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:id="@+id/servicesTV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/startDateET"
-            android:hint="Дата начала"
-            android:focusable="false"
-            android:cursorVisible="false"/>
+            android:padding="10dp"
+            android:text="@string/linkedServices"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
 
-    </com.google.android.material.textfield.TextInputLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/serviceRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="190dp"
+            android:layout_margin="10dp"
+            android:padding="10dp" />
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputEditText
+        <TextView
+            android:id="@+id/districtsTV"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/startTimeET"
-            android:hint="Время начала"
-            android:focusable="false"
-            android:cursorVisible="false"/>
+            android:padding="10dp"
+            android:text="@string/linkedDistricts"
+            android:textColor="@color/black"
+            android:textSize="18sp" />
 
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputEditText
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/districtRecyclerView"
             android:layout_width="match_parent"
+            android:layout_height="190dp"
+            android:layout_margin="10dp" />
+
+        <Button
+            android:id="@+id/createEventButton"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/endDateET"
-            android:hint="Дата окончания"
-            android:focusable="false"
-            android:cursorVisible="false"/>
+            android:layout_gravity="center"
+            android:text="@string/add" />
 
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/endTimeET"
-            android:hint="Вреия окончания"
-            android:focusable="false"
-            android:cursorVisible="false"/>
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/descriptionET"
-            android:hint="Описание"/>
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Связанные службы: "
-        android:textSize="18sp"
-        android:textColor="@color/black"
-        android:padding="10dp"
-        android:id="@+id/servicesTV"/>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/serviceRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="190dp"
-        android:padding="10dp"
-        android:layout_margin="10dp"/>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Связанные районы: "
-        android:textSize="18sp"
-        android:textColor="@color/black"
-        android:padding="10dp"
-        android:id="@+id/districtsTV"/>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/districtRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="190dp"
-        android:layout_margin="10dp"/>
-
-    <Button
-        android:id="@+id/createEventButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Добавить"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_gravity="center"/>
-
-</LinearLayout>
+    </LinearLayout>
 
 </ScrollView>

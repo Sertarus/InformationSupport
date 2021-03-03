@@ -19,8 +19,8 @@ import com.application.informationsupport.models.ModelBranchInfo
 
 class BranchAdapter(
     val context: Activity,
-    var branchList: List<ModelBranchInfo>,
-    val currentUser: String
+    private var branchList: List<ModelBranchInfo>,
+    private val currentUser: String
 ) : RecyclerView.Adapter<BranchAdapter.BranchHolder>() {
 
     class BranchHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

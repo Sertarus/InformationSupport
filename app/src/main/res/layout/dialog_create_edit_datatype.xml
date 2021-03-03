@@ -13,7 +13,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:text="Добавить форму"
+            android:text="@string/AddForm"
             android:textAlignment="center"
             android:textColor="@color/colorAccent"
             android:textSize="16sp"
@@ -27,7 +27,7 @@
                 android:id="@+id/nameET"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Название"
+                android:hint="@string/Name"
                 android:inputType="text" />
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -41,7 +41,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:text="Данные о человеке: "
+                android:text="@string/PersonInfo"
                 android:textColor="@color/black"
                 android:textSize="18sp" />
 
@@ -57,7 +57,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="К форме будут добавлены обязательные реквизиты: ФИО, дата рождения "
+            android:text="@string/HumanFormWarning"
             android:textColor="@color/black"
             android:textSize="18sp" />
 
@@ -72,7 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Добавить реквизит" />
+            android:text="@string/AddRecord" />
 
         <Button
             android:id="@+id/createDatatypeButton"
@@ -81,7 +81,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_margin="20dp"
-            android:text="Добавить" />
+            android:text="@string/add" />
 
     </LinearLayout>
 

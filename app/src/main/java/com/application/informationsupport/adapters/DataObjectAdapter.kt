@@ -2,6 +2,7 @@ package com.application.informationsupport.adapters
 
 import android.Manifest
 import android.app.Activity
+import android.app.DatePickerDialog
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -12,7 +13,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.SpannableStringBuilder
-import android.util.Base64
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -25,7 +25,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.core.content.ContextCompat
-import androidx.core.view.children
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
@@ -35,26 +34,27 @@ import com.google.android.material.textfield.TextInputLayout
 import com.squareup.picasso.Picasso
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.util.*
 
 class DataObjectAdapter(
     val context: Activity,
-    var dataObjectList: List<ModelDataObject>,
-    var currentUser: String
+    private var dataObjectList: List<ModelDataObject>,
+    private var currentUser: String
 ) : RecyclerView.Adapter<DataObjectAdapter.DataObjectHolder>() {
 
-    val CAMERA_REQUEST_CODE = 100
-    val STORAGE_REQUEST_CODE = 200
-    val IMAGE_PICK_GALLERY_CODE = 300
-    val IMAGE_PICK_CAMERA_CODE = 400
-    val cameraPermissions = arrayOf(
+    private val CAMERA_REQUEST_CODE = 100
+    private val STORAGE_REQUEST_CODE = 200
+    private val IMAGE_PICK_GALLERY_CODE = 300
+    private val IMAGE_PICK_CAMERA_CODE = 400
+    private val cameraPermissions = arrayOf(
         Manifest.permission.CAMERA,
         Manifest.permission.WRITE_EXTERNAL_STORAGE
     )
-    val storagePermissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    private val storagePermissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
     lateinit var currentUri: Uri
     lateinit var imageView: ImageView
     val formRecordList = mutableListOf<Pair<String, String>>()
-    val oldRecordList = mutableListOf<Pair<String, String>>()
+    private val oldRecordList = mutableListOf<Pair<String, String>>()
 
     class DataObjectHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
@@ -178,7 +178,7 @@ class DataObjectAdapter(
             .inflate(R.layout.dialog_create_edit_data_object, null)
         val changeTV = view.findViewById<TextView>(R.id.addTV)
         val nameET = view.findViewById<EditText>(R.id.nameET)
-        imageView = view.findViewById<ImageView>(R.id.imageView)
+        imageView = view.findViewById(R.id.imageView)
         val imageButton = view.findViewById<Button>(R.id.imageButton)
         val branchSpinner = view.findViewById<Spinner>(R.id.spinnerBranch)
         val fillFormButton = view.findViewById<Button>(R.id.fillFormButton)
@@ -278,6 +278,29 @@ class DataObjectAdapter(
                                 LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
                             editText.hint = it.first
                             editText.text = SpannableStringBuilder(it.second)
+                            if (it.first == "Дата рождения") {
+                                editText.isFocusable = false
+                                editText.isCursorVisible = false
+                                editText.setOnClickListener {
+                                    val calendar = Calendar.getInstance()
+                                    val cYear = calendar.get(Calendar.YEAR)
+                                    val cMonth = calendar.get(Calendar.MONTH)
+                                    val cDay = calendar.get(Calendar.DAY_OF_MONTH)
+                                    val datePickerDialog = DatePickerDialog(
+                                        context,
+                                        DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
+                                            val correctMonth = (month + 1)
+                                            var formatMonth = correctMonth.toString()
+                                            if (correctMonth < 10) formatMonth = "0$correctMonth"
+                                            var formatDay = dayOfMonth.toString()
+                                            if (dayOfMonth < 10) formatDay = "0$dayOfMonth"
+                                            editText.text =
+                                                SpannableStringBuilder("${year}-${formatMonth}-${formatDay}")
+                                        }, cYear, cMonth, cDay
+                                    )
+                                    datePickerDialog.show()
+                                }
+                            }
                             textInputLayout.addView(editText)
                         }
                     }
@@ -321,6 +344,29 @@ class DataObjectAdapter(
                                 )
                             )
                             editText.text = SpannableStringBuilder(recordValueRS.getString("value"))
+                            if (recordTypesRS.getString("name") == "Дата рождения") {
+                                editText.isFocusable = false
+                                editText.isCursorVisible = false
+                                editText.setOnClickListener {
+                                    val calendar = Calendar.getInstance()
+                                    val cYear = calendar.get(Calendar.YEAR)
+                                    val cMonth = calendar.get(Calendar.MONTH)
+                                    val cDay = calendar.get(Calendar.DAY_OF_MONTH)
+                                    val datePickerDialog = DatePickerDialog(
+                                        context,
+                                        DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
+                                            val correctMonth = (month + 1)
+                                            var formatMonth = correctMonth.toString()
+                                            if (correctMonth < 10) formatMonth = "0$correctMonth"
+                                            var formatDay = dayOfMonth.toString()
+                                            if (dayOfMonth < 10) formatDay = "0$dayOfMonth"
+                                            editText.text =
+                                                SpannableStringBuilder("${year}-${formatMonth}-${formatDay}")
+                                        }, cYear, cMonth, cDay
+                                    )
+                                    datePickerDialog.show()
+                                }
+                            }
                             textInputLayout.addView(editText)
                         }
                     }
@@ -341,6 +387,29 @@ class DataObjectAdapter(
                             editText.layoutParams =
                                 LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
                             editText.hint = recordTypesRS.getString("name")
+                            if (recordTypesRS.getString("name") == "Дата рождения") {
+                                editText.isFocusable = false
+                                editText.isCursorVisible = false
+                                editText.setOnClickListener {
+                                    val calendar = Calendar.getInstance()
+                                    val cYear = calendar.get(Calendar.YEAR)
+                                    val cMonth = calendar.get(Calendar.MONTH)
+                                    val cDay = calendar.get(Calendar.DAY_OF_MONTH)
+                                    val datePickerDialog = DatePickerDialog(
+                                        context,
+                                        DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
+                                            val correctMonth = (month + 1)
+                                            var formatMonth = correctMonth.toString()
+                                            if (correctMonth < 10) formatMonth = "0$correctMonth"
+                                            var formatDay = dayOfMonth.toString()
+                                            if (dayOfMonth < 10) formatDay = "0$dayOfMonth"
+                                            editText.text =
+                                                SpannableStringBuilder("${year}-${formatMonth}-${formatDay}")
+                                        }, cYear, cMonth, cDay
+                                    )
+                                    datePickerDialog.show()
+                                }
+                            }
                             textInputLayout.addView(editText)
                         }
                     }
@@ -397,101 +466,105 @@ class DataObjectAdapter(
         val ad = changeBuilder.create()
         ad.show()
         createButton.setOnClickListener {
-            if (nameET.text.length !in 1..30) {
-                Toast.makeText(
-                    context,
-                    "Длина названия объекта должна быть от 1 до 30 символов",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else if (formRecordList.isEmpty()) {
-                Toast.makeText(context, "Форма объекта должна быть заполнена", Toast.LENGTH_SHORT)
-                    .show()
-            } else {
-                var encodedImage: ByteArray? = null
-                if (this::currentUri.isInitialized && currentUri != Uri.EMPTY) {
-                    val bitmap =
-                        MediaStore.Images.Media.getBitmap(context.contentResolver, currentUri)
-                    val baos = ByteArrayOutputStream()
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 40, baos)
-                    encodedImage = baos.toByteArray()
-                }
-                val connection = DatabaseConnector().createConnection()
-                val ifNameExistRS = connection.createStatement()
-                    .executeQuery("select * from dataobjects where name = '${nameET.text}' and deleted = '0'")
-                if (ifNameExistRS.next()) {
+            when {
+                nameET.text.length !in 1..30 -> {
                     Toast.makeText(
                         context,
-                        "Объект с таким именем уже существует",
+                        "Длина названия объекта должна быть от 1 до 30 символов",
                         Toast.LENGTH_SHORT
                     ).show()
-                } else {
-                    val rs = connection.createStatement().executeQuery(
-                        "select iduser from users where" +
-                                " login = '$currentUser'"
-                    )
-                    rs.next()
-                    val creatorID = rs.getString("iduser")
-                    if (isEdit) {
-                        val dataObjectRS = connection.createStatement()
-                            .executeQuery("select iddataobject from dataobjects where name = '$chosenDataObjectName'")
-                        dataObjectRS.next()
-                        val dataObjectID = dataObjectRS.getString("iddataobject")
-                        if (encodedImage != null) {
-                            val preparedStatement =
-                                connection.prepareStatement("update dataobjects set name = '${nameET.text}', image = ?, changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
-                            preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
-                            preparedStatement.executeUpdate()
+                }
+                formRecordList.isEmpty() -> {
+                    Toast.makeText(context, "Форма объекта должна быть заполнена", Toast.LENGTH_SHORT)
+                        .show()
+                }
+                else -> {
+                    var encodedImage: ByteArray? = null
+                    if (this::currentUri.isInitialized && currentUri != Uri.EMPTY) {
+                        val bitmap =
+                            MediaStore.Images.Media.getBitmap(context.contentResolver, currentUri)
+                        val baos = ByteArrayOutputStream()
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 40, baos)
+                        encodedImage = baos.toByteArray()
+                    }
+                    val connection = DatabaseConnector().createConnection()
+                    val ifNameExistRS = connection.createStatement()
+                        .executeQuery("select * from dataobjects where name = '${nameET.text}' and deleted = '0'")
+                    if (ifNameExistRS.next()) {
+                        Toast.makeText(
+                            context,
+                            "Объект с таким именем уже существует",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        val rs = connection.createStatement().executeQuery(
+                            "select iduser from users where" +
+                                    " login = '$currentUser'"
+                        )
+                        rs.next()
+                        val creatorID = rs.getString("iduser")
+                        if (isEdit) {
+                            val dataObjectRS = connection.createStatement()
+                                .executeQuery("select iddataobject from dataobjects where name = '$chosenDataObjectName'")
+                            dataObjectRS.next()
+                            val dataObjectID = dataObjectRS.getString("iddataobject")
+                            if (encodedImage != null) {
+                                val preparedStatement =
+                                    connection.prepareStatement("update dataobjects set name = '${nameET.text}', image = ?, changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
+                                preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
+                                preparedStatement.executeUpdate()
+                            } else {
+                                connection.createStatement()
+                                    .executeQuery("update dataobjects set name = '${nameET.text}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
+                            }
+                            var counter = 0
+                            formRecordList.forEach {
+                                if (it.second != oldRecordList[0].second) {
+                                    val recordTypeIDRS = connection.createStatement()
+                                        .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
+                                    recordTypeIDRS.next()
+                                    val recordTypeID = recordTypeIDRS.getString("idrecordtype")
+                                    connection.createStatement()
+                                        .executeQuery("update recordvalues set value = '${it.second}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where recordtype = '$recordTypeID' and dataobject = '$dataObjectID'")
+                                }
+                                counter++
+                            }
+                            Toast.makeText(context, "Объект изменён", Toast.LENGTH_SHORT).show()
+                            ad.dismiss()
+                            refreshDataObjects()
                         } else {
-                            connection.createStatement()
-                                .executeQuery("update dataobjects set name = '${nameET.text}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where name = '$chosenDataObjectName'")
-                        }
-                        var counter = 0
-                        formRecordList.forEach {
-                            if (it.second != oldRecordList[0].second) {
+                            val selectedBranchIDRS = connection.createStatement()
+                                .executeQuery("select idbranch from branches where name = '${branchSpinner.selectedItem}' and deleted = '0'")
+                            selectedBranchIDRS.next()
+                            val selectedBranchID = selectedBranchIDRS.getString("idbranch")
+                            if (encodedImage != null) {
+                                val preparedStatement =
+                                    connection.prepareStatement("insert into dataobjects (name, branch, image, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', ?, '$creatorID', SYSTIMESTAMP)")
+                                preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
+                                preparedStatement.executeUpdate()
+                            } else {
+                                connection.createStatement()
+                                    .executeQuery("insert into dataobjects (name, branch, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', '$creatorID', SYSTIMESTAMP)")
+                            }
+                            val dataObjectRS = connection.createStatement()
+                                .executeQuery("select iddataobject from dataobjects where name = '${nameET.text}'")
+                            dataObjectRS.next()
+                            val dataObjectID = dataObjectRS.getString("iddataobject")
+                            formRecordList.forEach {
                                 val recordTypeIDRS = connection.createStatement()
                                     .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
                                 recordTypeIDRS.next()
                                 val recordTypeID = recordTypeIDRS.getString("idrecordtype")
                                 connection.createStatement()
-                                    .executeQuery("update recordvalues set value = '${it.second}', changedby = '$creatorID', changeddate = SYSTIMESTAMP where recordtype = '$recordTypeID' and dataobject = '$dataObjectID'")
+                                    .executeQuery("insert into recordvalues (value, recordtype, dataobject, createdby, creationdate) values ('${it.second}', '$recordTypeID', '$dataObjectID', '$creatorID', SYSTIMESTAMP)")
                             }
-                            counter++
+                            Toast.makeText(context, "Объект создан", Toast.LENGTH_SHORT).show()
+                            ad.dismiss()
+                            refreshDataObjects()
                         }
-                        Toast.makeText(context, "Объект изменён", Toast.LENGTH_SHORT).show()
-                        ad.dismiss()
-                        refreshDataObjects()
-                    } else {
-                        val selectedBranchIDRS = connection.createStatement()
-                            .executeQuery("select idbranch from branches where name = '${branchSpinner.selectedItem}' and deleted = '0'")
-                        selectedBranchIDRS.next()
-                        val selectedBranchID = selectedBranchIDRS.getString("idbranch")
-                        if (encodedImage != null) {
-                            val preparedStatement =
-                                connection.prepareStatement("insert into dataobjects (name, branch, image, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', ?, '$creatorID', SYSTIMESTAMP)")
-                            preparedStatement.setBinaryStream(1, ByteArrayInputStream(encodedImage))
-                            preparedStatement.executeUpdate()
-                        } else {
-                            connection.createStatement()
-                                .executeQuery("insert into dataobjects (name, branch, createdby, creationdate) values ('${nameET.text}', '$selectedBranchID', '$creatorID', SYSTIMESTAMP)")
-                        }
-                        val dataObjectRS = connection.createStatement()
-                            .executeQuery("select iddataobject from dataobjects where name = '${nameET.text}'")
-                        dataObjectRS.next()
-                        val dataObjectID = dataObjectRS.getString("iddataobject")
-                        formRecordList.forEach {
-                            val recordTypeIDRS = connection.createStatement()
-                                .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
-                            recordTypeIDRS.next()
-                            val recordTypeID = recordTypeIDRS.getString("idrecordtype")
-                            connection.createStatement()
-                                .executeQuery("insert into recordvalues (value, recordtype, dataobject, createdby, creationdate) values ('${it.second}', '$recordTypeID', '$dataObjectID', '$creatorID', SYSTIMESTAMP)")
-                        }
-                        Toast.makeText(context, "Объект создан", Toast.LENGTH_SHORT).show()
-                        ad.dismiss()
-                        refreshDataObjects()
                     }
+                    connection.close()
                 }
-                connection.close()
             }
         }
     }

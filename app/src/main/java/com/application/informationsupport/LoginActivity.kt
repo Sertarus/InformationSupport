@@ -11,8 +11,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.application.informationsupport.database.DatabaseConnector
 import com.google.android.material.textfield.TextInputEditText
-import java.sql.Connection
-import java.sql.DriverManager
 
 
 class LoginActivity : AppCompatActivity() {
@@ -37,23 +35,25 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val connection = DatabaseConnector().createConnection()
                 val stmt = connection.createStatement()
-                val rs=stmt.executeQuery("select * from users where login = '" + login.text.toString() + "'");
+                val rs =
+                    stmt.executeQuery("select * from users where login = '" + login.text.toString() + "'")
                 val isNotEmpty = rs.next()
                 if (isNotEmpty) {
                     rightPass = rs.getString("password")
                     if (rs.getString("blocked") == "0") blocked = false
                     role = rs.getString("role")
                 }
-                connection.close();
-            }
-            catch (e: SQLException) {
+                connection.close()
+            } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
             }
             when {
                 blocked || rightPass == "" || rightPass != password.text.toString() -> {
-                    Toast.makeText(this, "Неверное имя пользователя или пароль",
-                        Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        this, "Неверное имя пользователя или пароль",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
                 else -> {
                     val intent = Intent(this, MainActivity::class.java)

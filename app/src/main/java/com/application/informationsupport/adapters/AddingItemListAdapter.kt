@@ -18,7 +18,7 @@ class AddingItemListAdapter(
     var addedItemList: MutableList<Pair<String, Int>>
 ) : RecyclerView.Adapter<AddingItemListAdapter.AddingItemHolder>() {
 
-    var counter = 1
+    private var counter = 1
 
     class AddingItemHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var nameTV: TextView = itemView.findViewById(R.id.nameTV)
@@ -89,9 +89,4 @@ class AddingItemListAdapter(
         this.notifyDataSetChanged()
     }
 
-    fun addNewRecord(recordName: String) {
-        addedItemList.add(Pair(recordName, counter))
-        counter++
-        this.notifyDataSetChanged()
-    }
 }

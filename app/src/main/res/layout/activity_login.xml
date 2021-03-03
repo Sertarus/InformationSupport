@@ -3,70 +3,70 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="20dp"
-    tools:context=".LoginActivity"
     android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:focusableInTouchMode="true"
+    android:padding="20dp"
+    tools:context=".LoginActivity">
 
     <TextView
+        android:id="@+id/LoginLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textAlignment="center"
-        android:gravity="center_horizontal"
-        android:text="Авторизация"
-        android:textSize="40sp"
-        android:textColor="@color/colorAccent"
-        android:id="@+id/LoginLabel"
         android:layout_above="@+id/loginTIL"
-        android:layout_margin="20dp"/>
+        android:layout_margin="20dp"
+        android:gravity="center_horizontal"
+        android:text="@string/Authorization"
+        android:textAlignment="center"
+        android:textColor="@color/colorAccent"
+        android:textSize="40sp" />
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/loginTIL"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/loginTIL"
         android:layout_centerVertical="true"
-        android:paddingHorizontal="100sp"
-        android:layout_margin="20dp">
+        android:layout_margin="20dp"
+        android:paddingHorizontal="100sp">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/loginET"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/loginET"
+            android:hint="@string/UserName"
             android:inputType="textNoSuggestions"
-            android:hint="Имя пользователя"
-            android:textSize="30sp"/>
+            android:textSize="30sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/passwordTIL"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/passwordTIL"
         android:layout_below="@id/loginTIL"
-        android:paddingHorizontal="100sp"
-        android:layout_margin="20dp">
+        android:layout_centerHorizontal="true"
+        android:layout_margin="20dp"
+        android:paddingHorizontal="100sp">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/passwordET"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/passwordET"
+            android:hint="@string/Password"
             android:inputType="textPassword"
-            android:hint="Пароль"
-            android:textSize="30sp"/>
+            android:textSize="30sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
+        android:id="@+id/logButton"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Вход"
+        android:layout_below="@+id/passwordTIL"
+        android:layout_centerHorizontal="true"
         android:layout_margin="20dp"
         android:padding="20sp"
-        android:layout_centerHorizontal="true"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_below="@+id/passwordTIL"
-        android:id="@+id/logButton"
+        android:text="@string/Enter"
         android:textSize="35sp" />
 
 

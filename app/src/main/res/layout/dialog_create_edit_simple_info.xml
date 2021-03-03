@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
     <TextView
+        android:id="@+id/addTV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Добавить "
+        android:gravity="center_horizontal"
+        android:text="@string/addSpace"
+        android:textAlignment="center"
         android:textColor="@color/colorAccent"
         android:textSize="16sp"
-        android:textStyle="bold"
-        android:textAlignment="center"
-        android:gravity="center_horizontal"
-        android:id="@+id/addTV"/>
+        android:textStyle="bold" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/nameET"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/nameET"
-            android:inputType="text"
-            android:hint="Название"/>
+            android:hint="@string/name"
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button
         android:id="@+id/createSimpleInfoButton"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Добавить"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        android:text="@string/add" />
 
 </LinearLayout>

@@ -10,18 +10,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.view.menu.ActionMenuItemView
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelMainUserInfo
-import com.application.informationsupport.models.ModelUserInfo
 
 class UserAdapter(
     val context: Activity,
-    var userList: List<ModelMainUserInfo>,
-    val currentUser: String
+    private var userList: List<ModelMainUserInfo>,
+    private val currentUser: String
 ) : RecyclerView.Adapter<UserAdapter.UserHolder>() {
 
     class UserHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -299,11 +297,19 @@ class UserAdapter(
                     Toast.makeText(context, "Недопустимая длина ФИО", Toast.LENGTH_SHORT).show()
                 }
                 emailET.text.length !in 1..20 -> {
-                    Toast.makeText(context, "Недопустимая длина электронной почты", Toast.LENGTH_SHORT)
+                    Toast.makeText(
+                        context,
+                        "Недопустимая длина электронной почты",
+                        Toast.LENGTH_SHORT
+                    )
                         .show()
                 }
                 phoneNumberET.text.length !in 1..16 -> {
-                    Toast.makeText(context, "Недопустимая длина номера телефона", Toast.LENGTH_SHORT)
+                    Toast.makeText(
+                        context,
+                        "Недопустимая длина номера телефона",
+                        Toast.LENGTH_SHORT
+                    )
                         .show()
                 }
                 else -> {
