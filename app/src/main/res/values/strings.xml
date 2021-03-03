@@ -57,4 +57,6 @@
     <string name="district">Район</string>
     <string name="service">Служба</string>
     <string name="addDate">Дата добавления</string>
+    <string name="InfoVersionTV">Версия приложения</string>
+    <string name="Version">Версия</string>
 </resources>
