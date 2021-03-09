@@ -43,25 +43,33 @@ class LoginActivity : AppCompatActivity() {
                     if (rs.getString("blocked") == "0") blocked = false
                     role = rs.getString("role")
                 }
+
+                when {
+                    blocked || rightPass == "" || rightPass != password.text.toString() -> {
+                        Toast.makeText(
+                            this, "Неверное имя пользователя или пароль",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    else -> {
+                        val rs = connection.createStatement().executeQuery(
+                            "select iduser from users where" +
+                                    " login = '${login.text.toString()}'"
+                        )
+                        rs.next()
+                        val creatorID = rs.getString("iduser")
+                        connection.createStatement().executeQuery("insert into log_user_info (userid, creationdate) values ('$creatorID', SYSTIMESTAMP)")
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                        intent.putExtra("name", login.text.toString())
+                        intent.putExtra("role", role)
+                        startActivity(intent)
+                    }
+                }
                 connection.close()
             } catch (e: SQLException) {
                 Log.e("MyApp", e.toString())
                 e.printStackTrace()
-            }
-            when {
-                blocked || rightPass == "" || rightPass != password.text.toString() -> {
-                    Toast.makeText(
-                        this, "Неверное имя пользователя или пароль",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                else -> {
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    intent.putExtra("name", login.text.toString())
-                    intent.putExtra("role", role)
-                    startActivity(intent)
-                }
             }
         }
     }

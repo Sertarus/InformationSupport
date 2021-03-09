@@ -129,6 +129,21 @@ class MainActivity : AppCompatActivity() {
             startActivity(newIntent)
         }
         if (id == R.id.action_logout) {
+            try {
+                val connection = DatabaseConnector().createConnection()
+                val rs = connection.createStatement().executeQuery(
+                    "select iduser from users where" +
+                            " login = '${intent.getStringExtra("name")}'"
+                )
+                rs.next()
+                val creatorID = rs.getString("iduser")
+                connection.createStatement().executeQuery("update log_user_info set changeddate = SYSTIMESTAMP, deleted = '1' where userid = '$creatorID' and deleted = '0'")
+                connection.close()
+            }
+            catch (e: SQLException) {
+                Log.e("MyApp", e.toString())
+                e.printStackTrace()
+            }
             val intent = Intent(this, LoginActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)

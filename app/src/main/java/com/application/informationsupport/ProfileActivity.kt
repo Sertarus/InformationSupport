@@ -22,7 +22,7 @@ class ProfileActivity : AppCompatActivity() {
         title = "О программе"
         loginTV.text = userName
         deviceIDTV.text = android.os.Build.SERIAL
-        versionTV.text = BuildConfig.VERSION_NAME
+        appVersionTV.text = BuildConfig.VERSION_NAME
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
