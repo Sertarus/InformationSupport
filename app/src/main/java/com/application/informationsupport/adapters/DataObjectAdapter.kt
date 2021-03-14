@@ -521,7 +521,7 @@ class DataObjectAdapter(
                             formRecordList.forEach {
                                 if (it.second != oldRecordList[0].second) {
                                     val recordTypeIDRS = connection.createStatement()
-                                        .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
+                                        .executeQuery("select idrecordtype from recordtypes where name = '${it.first}' and deleted = '0'")
                                     recordTypeIDRS.next()
                                     val recordTypeID = recordTypeIDRS.getString("idrecordtype")
                                     connection.createStatement()

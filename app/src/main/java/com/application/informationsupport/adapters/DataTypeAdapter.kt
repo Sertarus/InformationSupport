@@ -279,7 +279,7 @@ class DataTypeAdapter(
                                 datatypeIDRS.next()
                                 val datatypeID = datatypeIDRS.getString("iddatatype")
                                 val recordtypeIDRS = connection.createStatement()
-                                    .executeQuery("select idrecordtype from recordtypes where name = '${it.first}'")
+                                    .executeQuery("select idrecordtype from recordtypes where name = '${it.first}' and deleted = '0'")
                                 recordtypeIDRS.next()
                                 val recordTypeID = recordtypeIDRS.getString("idrecordtype")
                                 connection.createStatement()
