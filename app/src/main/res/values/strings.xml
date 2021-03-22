@@ -59,4 +59,15 @@
     <string name="addDate">Дата добавления</string>
     <string name="InfoVersionTV">Версия приложения</string>
     <string name="Version">Версия</string>
+    <string name="db_connection_tv">Настройка подключения к базе данных</string>
+    <string name="serverAdress">Адрес сервера БД</string>
+    <string name="serverPort">Порт подключения</string>
+    <string name="DBInstanceName">Имя экземпляра БД</string>
+    <string name="DBUserName">Имя пользователя БД</string>
+    <string name="DBUserPass">Пароль пользователя БД</string>
+    <string name="dbSettingsSave">Сохранить</string>
+    <string name="ftp_username">Имя пользователя FTP-сервера</string>
+    <string name="ftp_pass">Пароль пользователя FTP-сервера</string>
+    <string name="descrpition">Описание</string>
+    <string name="textForSearch">Текст для поиска</string>
 </resources>

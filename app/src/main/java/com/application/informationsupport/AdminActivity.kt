@@ -22,10 +22,18 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import com.application.informationsupport.adapters.*
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.*
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
 import java.util.*
 
 class AdminActivity : AppCompatActivity() {
@@ -38,13 +46,13 @@ class AdminActivity : AppCompatActivity() {
     private var currentData = ""
     private var serviceAdapter = SimpleItemAdapter(
         this, mutableListOf(),
-        "", currentData
+        "", currentData, "", "", ""
     )
-    private var userAdapter = UserAdapter(this, mutableListOf(), "")
-    private var datatypeAdapter = DataTypeAdapter(this, mutableListOf(), "")
-    private var branchAdapter = BranchAdapter(this, mutableListOf(), "")
-    private var dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), "")
-    private var eventAdapter = EventAdapter(this, mutableListOf(), "")
+    private var userAdapter = UserAdapter(this, mutableListOf(), "", "", "", "")
+    private var datatypeAdapter = DataTypeAdapter(this, mutableListOf(), "", "", "", "")
+    private var branchAdapter = BranchAdapter(this, mutableListOf(), "", "", "", "")
+    private var dataObjectAdapter = DataObjectAdapter(this, mutableListOf(), "", "", "", "")
+    private var eventAdapter = EventAdapter(this, mutableListOf(), "", "", "", "")
     private lateinit var recyclerView: RecyclerView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,9 +71,20 @@ class AdminActivity : AppCompatActivity() {
         recyclerView = findViewById(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            "informationSupport",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        val url = sharedPreferences.getString("URL", "")
+        val username = sharedPreferences.getString("username", "")
+        val pass = sharedPreferences.getString("pass", "")
         serviceAdapter = SimpleItemAdapter(
             this, mutableListOf(),
-            intent.getStringExtra("name")!!, currentData
+            intent.getStringExtra("name")!!, currentData, url, username, pass
         )
         chooseDatabaseTypeObjectButton.setOnClickListener {
             val options = arrayOf(
@@ -86,7 +105,7 @@ class AdminActivity : AppCompatActivity() {
                         title = "Пользователи"
                         currentData = "user"
                         userAdapter =
-                            UserAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                            UserAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, url, username, pass)
                         userAdapter.refreshUserInfo()
                         recyclerView.adapter = userAdapter
                     }
@@ -96,7 +115,7 @@ class AdminActivity : AppCompatActivity() {
                         currentData = "service"
                         serviceAdapter = SimpleItemAdapter(
                             this, mutableListOf(),
-                            intent.getStringExtra("name")!!, currentData
+                            intent.getStringExtra("name")!!, currentData, url, username, pass
                         )
                         serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
@@ -107,7 +126,7 @@ class AdminActivity : AppCompatActivity() {
                         currentData = "district"
                         serviceAdapter = SimpleItemAdapter(
                             this, mutableListOf(),
-                            intent.getStringExtra("name")!!, currentData
+                            intent.getStringExtra("name")!!, currentData, url, username, pass
                         )
                         serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
@@ -118,7 +137,7 @@ class AdminActivity : AppCompatActivity() {
                         currentData = "device"
                         serviceAdapter = SimpleItemAdapter(
                             this, mutableListOf(),
-                            intent.getStringExtra("name")!!, currentData
+                            intent.getStringExtra("name")!!, currentData, url, username, pass
                         )
                         serviceAdapter.refreshSimpleInfo()
                         recyclerView.adapter = serviceAdapter
@@ -127,7 +146,7 @@ class AdminActivity : AppCompatActivity() {
                         title = "Ветки"
                         currentData = "branch"
                         branchAdapter =
-                            BranchAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                            BranchAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, url, username, pass)
                         branchAdapter.refreshBranches()
                         recyclerView.adapter = branchAdapter
                     }
@@ -135,7 +154,7 @@ class AdminActivity : AppCompatActivity() {
                         title = "Формы"
                         currentData = "datatype"
                         datatypeAdapter =
-                            DataTypeAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                            DataTypeAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, url, username, pass)
                         datatypeAdapter.refreshDataTypes()
                         recyclerView.adapter = datatypeAdapter
                     }
@@ -145,7 +164,7 @@ class AdminActivity : AppCompatActivity() {
                         dataObjectAdapter = DataObjectAdapter(
                             this,
                             mutableListOf(),
-                            intent.getStringExtra("name")!!
+                            intent.getStringExtra("name")!!, url, username, pass
                         )
                         dataObjectAdapter.refreshDataObjects()
                         recyclerView.adapter = dataObjectAdapter
@@ -154,7 +173,7 @@ class AdminActivity : AppCompatActivity() {
                         title = "Мероприятия"
                         currentData = "event"
                         eventAdapter =
-                            EventAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+                            EventAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, url, username, pass)
                         eventAdapter.refreshEvents()
                         recyclerView.adapter = eventAdapter
                     }
@@ -165,7 +184,7 @@ class AdminActivity : AppCompatActivity() {
 
         addObjectButton.setOnClickListener {
             if (currentData == "service" || currentData == "district" || currentData == "device") {
-                createSimpleDialog()
+                createSimpleDialog(url, username, pass)
             }
             if (currentData == "user") {
                 userAdapter.createOrEditUser("", false)
@@ -191,14 +210,25 @@ class AdminActivity : AppCompatActivity() {
         inflater.inflate(R.menu.menu_search, menu)
         val item = menu!!.findItem(R.id.action_search)
         val searchView = item.actionView as androidx.appcompat.widget.SearchView
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            "informationSupport",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        val url = sharedPreferences.getString("URL", "")
+        val username = sharedPreferences.getString("username", "")
+        val pass = sharedPreferences.getString("pass", "")
         searchView.setOnQueryTextListener(object :
             androidx.appcompat.widget.SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
                 if (currentData != "") {
                     if (!TextUtils.isEmpty(query!!.trim())) {
-                        searchItems(query)
+                        searchItems(query, url, username, pass)
                     } else {
-                        searchItems("")
+                        searchItems("", url, username, pass)
                     }
                 }
                 return false
@@ -207,9 +237,9 @@ class AdminActivity : AppCompatActivity() {
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (currentData != "") {
                     if (!TextUtils.isEmpty(newText!!.trim())) {
-                        searchItems(newText)
+                        searchItems(newText, url, username, pass)
                     } else {
-                        searchItems("")
+                        searchItems("", url, username, pass)
                     }
                 }
                 return false
@@ -229,11 +259,11 @@ class AdminActivity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
-    private fun searchItems(query: String) {
+    private fun searchItems(query: String, url: String?, username: String?, pass: String?) {
         if (currentData == "service" || currentData == "district" || currentData == "device") {
             val dataSet = mutableListOf<ModelSimpleInfo>()
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val stmt = connection.createStatement()
                 val rs = stmt.executeQuery(
                     "select * from ${currentData}s where (lower(name) like'%${query.toLowerCase(
@@ -259,12 +289,42 @@ class AdminActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             serviceAdapter =
-                SimpleItemAdapter(this, dataSet, intent.getStringExtra("name")!!, currentData)
+                SimpleItemAdapter(this, dataSet, intent.getStringExtra("name")!!, currentData, url, username, pass)
             recyclerView.adapter = serviceAdapter
         }
         if (currentData == "user") {
@@ -280,7 +340,7 @@ class AdminActivity : AppCompatActivity() {
             }
             val dataSet = mutableListOf<ModelMainUserInfo>()
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val stmt = connection.createStatement()
                 val rs = stmt.executeQuery(
                     "select login, fullname, role, email, phonenumber, s.name as service," +
@@ -317,17 +377,47 @@ class AdminActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
-            userAdapter = UserAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            userAdapter = UserAdapter(this, dataSet, intent.getStringExtra("name")!!, url, username, pass)
             recyclerView.adapter = userAdapter
         }
         if (currentData == "datatype") {
             val dataSet = mutableListOf<ModelSimpleInfo>()
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val rs = connection.createStatement().executeQuery(
                     "select * from datatypes where" +
                             " lower(name) like '%${query.toLowerCase(Locale.ROOT)}%' and deleted = '0'"
@@ -348,17 +438,47 @@ class AdminActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
-            datatypeAdapter = DataTypeAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            datatypeAdapter = DataTypeAdapter(this, dataSet, intent.getStringExtra("name")!!, url, username, pass)
             recyclerView.adapter = datatypeAdapter
         }
         if (currentData == "branch") {
             val dataSet = mutableListOf<ModelBranchInfo>()
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val rs = connection.createStatement()
                     .executeQuery(
                         "select * from branches where lower(name) like '%${query.toLowerCase(
@@ -398,17 +518,47 @@ class AdminActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
-            branchAdapter = BranchAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            branchAdapter = BranchAdapter(this, dataSet, intent.getStringExtra("name")!!, url, username, pass)
             recyclerView.adapter = branchAdapter
         }
         if (currentData == "dataobject") {
             val dataSet = mutableListOf<ModelDataObject>()
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val rs = connection.createStatement().executeQuery(
                     "select * from dataobjects where (lower(name) like '%${query.toLowerCase(
                         Locale.ROOT
@@ -439,17 +589,47 @@ class AdminActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
-            dataObjectAdapter = DataObjectAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            dataObjectAdapter = DataObjectAdapter(this, dataSet, intent.getStringExtra("name")!!, url, username, pass)
             recyclerView.adapter = dataObjectAdapter
         }
         if (currentData == "event") {
             val dataSet = mutableListOf<ModelEvent>()
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val rs = connection.createStatement().executeQuery(
                     "select * from events where (lower(name) like '%${query.toLowerCase(
                         Locale.ROOT
@@ -477,16 +657,46 @@ class AdminActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
-            eventAdapter = EventAdapter(this, dataSet, intent.getStringExtra("name")!!)
+            eventAdapter = EventAdapter(this, dataSet, intent.getStringExtra("name")!!, url, username, pass)
             recyclerView.adapter = eventAdapter
         }
     }
 
-    private fun createSimpleDialog() {
+    private fun createSimpleDialog(url: String?, username: String?, pass: String?) {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_create_edit_simple_info, null)
         val addTV = view.findViewById<TextView>(R.id.addTV)
         var typeString = ""
@@ -513,7 +723,7 @@ class AdminActivity : AppCompatActivity() {
                 val name = nameET.text.toString()
                 if (name.length in 1..40) {
                     try {
-                        val connection = DatabaseConnector().createConnection()
+                        val connection = DatabaseConnector(url, username, pass).createConnection()
                         val ifNameExist = connection.createStatement()
                             .executeQuery("select * from ${currentData}s where name = '$name'")
                         if (ifNameExist.next()) {
@@ -549,9 +759,39 @@ class AdminActivity : AppCompatActivity() {
                         }
                         connection.close()
 
-                    } catch (e: SQLException) {
-                        Log.e("MyApp", e.toString())
-                        e.printStackTrace()
+                    } catch (e: Exception) {
+                        val file = File(this.filesDir, "log_error")
+                        if (!file.exists()) {
+                            file.mkdir()
+                        }
+                        try {
+                            val logfile = File(file, "log")
+                            val timestamp = System.currentTimeMillis()
+                            val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                            val localTime = sdf.format(Date(timestamp))
+                            val date = sdf.parse(localTime)!!
+                            if (logfile.exists()) {
+                                val fout = FileOutputStream(logfile, true)
+                                val myOutWriter = OutputStreamWriter(fout)
+                                myOutWriter.append("\n")
+                                myOutWriter.append(date.toString())
+                                myOutWriter.append("\n")
+                                myOutWriter.append(e.toString())
+                                myOutWriter.close()
+                                fout.close()
+                            }
+                            else {
+                                val writer = FileWriter(logfile)
+                                writer.append(date.toString())
+                                writer.append("\n")
+                                writer.append(e.toString())
+                                writer.flush()
+                                writer.close()
+                            }
+                        }
+                        catch (e: Exception) {
+
+                        }
                     }
                 } else {
                     var secondTypeString = ""

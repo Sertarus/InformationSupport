@@ -12,15 +12,27 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelBranchInfo
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 class BranchAdapter(
     val context: Activity,
     private var branchList: List<ModelBranchInfo>,
-    private val currentUser: String
+    private val currentUser: String,
+    private val url: String?,
+    private val username: String?,
+    private val pass: String?
 ) : RecyclerView.Adapter<BranchAdapter.BranchHolder>() {
 
     class BranchHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -75,7 +87,7 @@ class BranchAdapter(
                     }
                     2 -> {
                         try {
-                            val connection = DatabaseConnector().createConnection()
+                            val connection = DatabaseConnector(url, username, pass).createConnection()
                             val idStmt = connection.createStatement()
                             val rs = idStmt.executeQuery(
                                 "select iduser from users where" +
@@ -99,9 +111,39 @@ class BranchAdapter(
                                 .executeQuery("update branches_districts set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where branch = '$branchID'")
                             Toast.makeText(context, "Ветка удалена", Toast.LENGTH_SHORT).show()
                             connection.close()
-                        } catch (e: SQLException) {
-                            Log.e("MyApp", e.toString())
-                            e.printStackTrace()
+                        } catch (e: Exception) {
+                            val file = File(context.filesDir, "log_error")
+                            if (!file.exists()) {
+                                file.mkdir()
+                            }
+                            try {
+                                val logfile = File(file, "log")
+                                val timestamp = System.currentTimeMillis()
+                                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                                val localTime = sdf.format(Date(timestamp))
+                                val date = sdf.parse(localTime)!!
+                                if (logfile.exists()) {
+                                    val fout = FileOutputStream(logfile, true)
+                                    val myOutWriter = OutputStreamWriter(fout)
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(date.toString())
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(e.toString())
+                                    myOutWriter.close()
+                                    fout.close()
+                                }
+                                else {
+                                    val writer = FileWriter(logfile)
+                                    writer.append(date.toString())
+                                    writer.append("\n")
+                                    writer.append(e.toString())
+                                    writer.flush()
+                                    writer.close()
+                                }
+                            }
+                            catch (e: Exception) {
+
+                            }
                         }
                         refreshBranches()
                     }
@@ -115,7 +157,7 @@ class BranchAdapter(
     fun refreshBranches() {
         val dataSet = mutableListOf<ModelBranchInfo>()
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val rs = connection.createStatement()
                 .executeQuery("select * from branches where deleted = '0'")
             while (rs.next()) {
@@ -136,8 +178,10 @@ class BranchAdapter(
                 }
                 val datatypeSet = connection.createStatement()
                     .executeQuery("select name from datatypes where iddatatype = '${rs.getString("datatype")}'")
-                datatypeSet.next()
-                val datatypeName = datatypeSet.getString("name")
+                var datatypeName = ""
+                while (datatypeSet.next()) {
+                    datatypeName = datatypeSet.getString("name")
+                }
                 dataSet.add(
                     ModelBranchInfo(
                         rs.getString("name"),
@@ -149,9 +193,39 @@ class BranchAdapter(
                 )
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         this.branchList = dataSet
         this.notifyDataSetChanged()
@@ -187,7 +261,7 @@ class BranchAdapter(
         branchData.add("-")
         var currentDatatype = ""
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val infoRS = connection.createStatement()
                 .executeQuery("select * from branches where name = '$chosenBranchName'")
             infoRS.next()
@@ -210,9 +284,39 @@ class BranchAdapter(
                 branchData.add(branchRS.getString("name"))
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         val datatypeAdapter =
             ArrayAdapter(context, android.R.layout.simple_spinner_item, datatypeData)
@@ -239,7 +343,7 @@ class BranchAdapter(
                 try {
                     val newServiceData = mutableListOf<Pair<String, Boolean>>()
                     val newDistrictData = mutableListOf<Pair<String, Boolean>>()
-                    val connection = DatabaseConnector().createConnection()
+                    val connection = DatabaseConnector(url, username, pass).createConnection()
                     var serviceStmt = "select name from services where deleted = '0'"
                     var districtStmt = "select name from districts where deleted = '0'"
                     if (branchAdapter.getItem(position) != "-") {
@@ -262,9 +366,39 @@ class BranchAdapter(
                     }
                     districtAdapter = CheckAdapter(context, newDistrictData, "district")
                     districtRecyclerView.adapter = districtAdapter
-                } catch (e: SQLException) {
-                    Log.e("MyApp", e.toString())
-                    e.printStackTrace()
+                } catch (e: Exception) {
+                    val file = File(context.filesDir, "log_error")
+                    if (!file.exists()) {
+                        file.mkdir()
+                    }
+                    try {
+                        val logfile = File(file, "log")
+                        val timestamp = System.currentTimeMillis()
+                        val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                        val localTime = sdf.format(Date(timestamp))
+                        val date = sdf.parse(localTime)!!
+                        if (logfile.exists()) {
+                            val fout = FileOutputStream(logfile, true)
+                            val myOutWriter = OutputStreamWriter(fout)
+                            myOutWriter.append("\n")
+                            myOutWriter.append(date.toString())
+                            myOutWriter.append("\n")
+                            myOutWriter.append(e.toString())
+                            myOutWriter.close()
+                            fout.close()
+                        }
+                        else {
+                            val writer = FileWriter(logfile)
+                            writer.append(date.toString())
+                            writer.append("\n")
+                            writer.append(e.toString())
+                            writer.flush()
+                            writer.close()
+                        }
+                    }
+                    catch (e: Exception) {
+
+                    }
                 }
             }
         }
@@ -299,7 +433,7 @@ class BranchAdapter(
                 Toast.makeText(context, "Не выбрано ни одного района", Toast.LENGTH_SHORT).show()
             } else {
                 try {
-                    val connection = DatabaseConnector().createConnection()
+                    val connection = DatabaseConnector(url, username, pass).createConnection()
                     val ifNameExist = connection.createStatement()
                         .executeQuery("select * from branches where name = '${nameET.text}' and deleted = '0'")
                     if (ifNameExist.next()) {
@@ -368,9 +502,39 @@ class BranchAdapter(
                         }
                     }
                     connection.close()
-                } catch (e: SQLException) {
-                    Log.e("MyApp", e.toString())
-                    e.printStackTrace()
+                } catch (e: Exception) {
+                    val file = File(context.filesDir, "log_error")
+                    if (!file.exists()) {
+                        file.mkdir()
+                    }
+                    try {
+                        val logfile = File(file, "log")
+                        val timestamp = System.currentTimeMillis()
+                        val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                        val localTime = sdf.format(Date(timestamp))
+                        val date = sdf.parse(localTime)!!
+                        if (logfile.exists()) {
+                            val fout = FileOutputStream(logfile, true)
+                            val myOutWriter = OutputStreamWriter(fout)
+                            myOutWriter.append("\n")
+                            myOutWriter.append(date.toString())
+                            myOutWriter.append("\n")
+                            myOutWriter.append(e.toString())
+                            myOutWriter.close()
+                            fout.close()
+                        }
+                        else {
+                            val writer = FileWriter(logfile)
+                            writer.append(date.toString())
+                            writer.append("\n")
+                            writer.append(e.toString())
+                            writer.flush()
+                            writer.close()
+                        }
+                    }
+                    catch (e: Exception) {
+
+                    }
                 }
             }
             refreshBranches()

@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.MenuItem
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import com.application.informationsupport.adapters.CurrentEventAdapter
 
 class EventActivity : AppCompatActivity() {
@@ -15,7 +17,18 @@ class EventActivity : AppCompatActivity() {
         setContentView(R.layout.activity_event)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         title = "Текущие мероприятия"
-        val adapter = CurrentEventAdapter(this, mutableListOf(), intent.getStringExtra("name")!!)
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            "informationSupport",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        val url = sharedPreferences.getString("URL", "")
+        val username = sharedPreferences.getString("username", "")
+        val pass = sharedPreferences.getString("pass", "")
+        val adapter = CurrentEventAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, url, username, pass)
         recyclerView = findViewById(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)

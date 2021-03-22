@@ -18,12 +18,21 @@ import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelEvent
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
 import java.util.*
 
 class EventAdapter(
     val context: Activity,
     private var eventList: List<ModelEvent>,
-    private val currentUser: String
+    private val currentUser: String,
+    private val url: String?,
+    private val username: String?,
+    private val pass: String?
 ) : RecyclerView.Adapter<EventAdapter.EventHolder>() {
 
     class EventHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -72,7 +81,7 @@ class EventAdapter(
                     }
                     2 -> {
                         try {
-                            val connection = DatabaseConnector().createConnection()
+                            val connection = DatabaseConnector(url , username, pass).createConnection()
                             val idStmt = connection.createStatement()
                             val rs = idStmt.executeQuery(
                                 "select iduser from users where" +
@@ -93,9 +102,39 @@ class EventAdapter(
                             Toast.makeText(context, "Мероприятие удалено", Toast.LENGTH_SHORT)
                                 .show()
                             connection.close()
-                        } catch (e: SQLException) {
-                            Log.e("MyApp", e.toString())
-                            e.printStackTrace()
+                        } catch (e: Exception) {
+                            val file = File(context.filesDir, "log_error")
+                            if (!file.exists()) {
+                                file.mkdir()
+                            }
+                            try {
+                                val logfile = File(file, "log")
+                                val timestamp = System.currentTimeMillis()
+                                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                                val localTime = sdf.format(Date(timestamp))
+                                val date = sdf.parse(localTime)!!
+                                if (logfile.exists()) {
+                                    val fout = FileOutputStream(logfile, true)
+                                    val myOutWriter = OutputStreamWriter(fout)
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(date.toString())
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(e.toString())
+                                    myOutWriter.close()
+                                    fout.close()
+                                }
+                                else {
+                                    val writer = FileWriter(logfile)
+                                    writer.append(date.toString())
+                                    writer.append("\n")
+                                    writer.append(e.toString())
+                                    writer.flush()
+                                    writer.close()
+                                }
+                            }
+                            catch (e: Exception) {
+
+                            }
                         }
                         refreshEvents()
                     }
@@ -108,7 +147,7 @@ class EventAdapter(
     fun refreshEvents() {
         val dataSet = mutableListOf<ModelEvent>()
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val rs = connection.createStatement()
                 .executeQuery("select * from events where deleted = '0'")
             while (rs.next()) {
@@ -129,9 +168,39 @@ class EventAdapter(
                 )
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         this.eventList = dataSet
         this.notifyDataSetChanged()
@@ -155,7 +224,7 @@ class EventAdapter(
         districtRV.layoutManager = LinearLayoutManager(context)
         val addButton = view.findViewById<Button>(R.id.createEventButton)
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val servicesRS = connection.createStatement()
                 .executeQuery("select name from services where deleted = '0'")
             val serviceData = mutableListOf<Pair<String, Boolean>>()
@@ -216,9 +285,39 @@ class EventAdapter(
                 districtRV.adapter = CheckAdapter(context, districtData, "district")
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         startDateET.setOnClickListener {
             val calendar = Calendar.getInstance()
@@ -331,7 +430,7 @@ class EventAdapter(
                 Toast.makeText(context, "Не выбрано ни одного района", Toast.LENGTH_SHORT).show()
             } else {
                 try {
-                    val connection = DatabaseConnector().createConnection()
+                    val connection = DatabaseConnector(url, username, pass).createConnection()
                     val ifNameExistRS = connection.createStatement()
                         .executeQuery("select * from events where name = '${nameET.text}' and deleted = '0'")
                     if (!isEdit && ifNameExistRS.next()) {
@@ -397,9 +496,39 @@ class EventAdapter(
                         ad.dismiss()
                     }
                     connection.close()
-                } catch (e: SQLException) {
-                    Log.e("MyApp", e.toString())
-                    e.printStackTrace()
+                } catch (e: Exception) {
+                    val file = File(context.filesDir, "log_error")
+                    if (!file.exists()) {
+                        file.mkdir()
+                    }
+                    try {
+                        val logfile = File(file, "log")
+                        val timestamp = System.currentTimeMillis()
+                        val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                        val localTime = sdf.format(Date(timestamp))
+                        val date = sdf.parse(localTime)!!
+                        if (logfile.exists()) {
+                            val fout = FileOutputStream(logfile, true)
+                            val myOutWriter = OutputStreamWriter(fout)
+                            myOutWriter.append("\n")
+                            myOutWriter.append(date.toString())
+                            myOutWriter.append("\n")
+                            myOutWriter.append(e.toString())
+                            myOutWriter.close()
+                            fout.close()
+                        }
+                        else {
+                            val writer = FileWriter(logfile)
+                            writer.append(date.toString())
+                            writer.append("\n")
+                            writer.append(e.toString())
+                            writer.flush()
+                            writer.close()
+                        }
+                    }
+                    catch (e: Exception) {
+
+                    }
                 }
             }
         }

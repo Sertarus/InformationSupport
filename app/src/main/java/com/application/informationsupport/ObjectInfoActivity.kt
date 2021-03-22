@@ -12,9 +12,18 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import com.application.informationsupport.adapters.DataItemAdapter
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelDataItem
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ObjectInfoActivity : AppCompatActivity() {
 
@@ -30,6 +39,17 @@ class ObjectInfoActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         val dataSet = mutableListOf<ModelDataItem>()
         val type = intent.getStringExtra("type")
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            "informationSupport",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        val url = sharedPreferences.getString("URL", "")
+        val username = sharedPreferences.getString("username", "")
+        val pass = sharedPreferences.getString("pass", "")
         if (type == "service" || type == "district" || type == "device") {
             var typeName = ""
             when (type) {
@@ -49,7 +69,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                 }
             }
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val stmt = connection.createStatement()
                 val rs = stmt.executeQuery(
                     "select * from ${type}s where name = '${intent.getStringExtra("name")}' and deleted = '0'"
@@ -87,16 +107,46 @@ class ObjectInfoActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
         if (type == "user") {
             informationTV.text = "Информация о пользователе:"
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val rs = connection.createStatement().executeQuery(
                     "select login, password," +
                             " fullname, role, email, phonenumber, s.name as service," +
@@ -170,16 +220,46 @@ class ObjectInfoActivity : AppCompatActivity() {
                 }
                 dataSet.add(ModelDataItem("Статус блокировки", blockedName))
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
         if (type == "datatype") {
             informationTV.text = "Информация о форме:"
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val datatypeRS = connection.createStatement().executeQuery(
                     "select * from" +
                             " datatypes where name = '${intent.getStringExtra("name")}' and deleted = '0'"
@@ -232,16 +312,46 @@ class ObjectInfoActivity : AppCompatActivity() {
                     counter++
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
         if (type == "branch") {
             informationTV.text = "Информация о ветке:"
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val branchRS = connection.createStatement().executeQuery(
                     "select * from" +
                             " branches where name = '${intent.getStringExtra("name")}' and deleted = '0'"
@@ -260,8 +370,10 @@ class ObjectInfoActivity : AppCompatActivity() {
                 val datatypeSet = connection.createStatement().executeQuery(
                     "select name from datatypes where iddatatype = '${branchRS.getString("datatype")}'"
                 )
-                datatypeSet.next()
-                val datatypeName = datatypeSet.getString("name")
+                var datatypeName = "";
+                while (datatypeSet.next()) {
+                    datatypeName = datatypeSet.getString("name")
+                }
                 dataSet.add(ModelDataItem("Находится в ветке", higherBranchName))
                 dataSet.add(ModelDataItem("Форма", datatypeName))
                 val userNameStmt = connection.createStatement()
@@ -284,8 +396,10 @@ class ObjectInfoActivity : AppCompatActivity() {
                         "select login from users where iduser =" +
                                 " '${branchRS.getString("changedby")}'"
                     )
-                    changedUserNameRS.next()
-                    val changedUserName = changedUserNameRS.getString("login")
+                    var changedUserName = ""
+                    while(changedUserNameRS.next()) {
+                        changedUserName = changedUserNameRS.getString("login")
+                    }
                     dataSet.add(ModelDataItem("Последний изменивший пользователь", changedUserName))
                     dataSet.add(
                         ModelDataItem(
@@ -317,18 +431,49 @@ class ObjectInfoActivity : AppCompatActivity() {
                     counter++
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
         if (type == "dataobject") {
             informationTV.visibility = View.GONE
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val dataObjectRS = connection.createStatement()
                     .executeQuery("select * from dataobjects where name = '${intent.getStringExtra("name")}' and deleted = '0'")
+
                 dataObjectRS.next()
                 if (intent.getBooleanExtra("isAdmin", false)) {
                     informationTV.text = "Информация об объекте:"
@@ -409,16 +554,46 @@ class ObjectInfoActivity : AppCompatActivity() {
                     )
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
         if (type == "event") {
             informationTV.text = "Информация о мероприятии:"
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val eventRS = connection.createStatement()
                     .executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
                 eventRS.next()
@@ -488,16 +663,46 @@ class ObjectInfoActivity : AppCompatActivity() {
                     counter++
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }
         if (type == "currentEvent") {
             informationTV.visibility = View.GONE
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val eventRS = connection.createStatement()
                     .executeQuery("select * from events where name = '${intent.getStringExtra("name")}' and deleted = '0'")
                 eventRS.next()
@@ -515,9 +720,39 @@ class ObjectInfoActivity : AppCompatActivity() {
                     )
                 )
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }

@@ -14,12 +14,22 @@ import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelObjectList
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ObjectListAdapter(
     val context: Activity,
     var objectList: MutableList<ModelObjectList>,
     val currentUser: String,
-    val isSearch: Boolean
+    val isSearch: Boolean,
+    private val url: String?,
+    private val username: String?,
+    private val pass: String?
 ) :
     RecyclerView.Adapter<ObjectListAdapter.ObjectListHolder>() {
 
@@ -86,7 +96,7 @@ class ObjectListAdapter(
     fun refreshObjectList(text: String) {
         val dataSet = mutableListOf<ModelObjectList>()
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val currentUserInfoRS = connection.createStatement()
                 .executeQuery("select * from users where login = '$currentUser'")
             currentUserInfoRS.next()
@@ -152,9 +162,39 @@ class ObjectListAdapter(
                 }
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         this.objectList = dataSet
         this.notifyDataSetChanged()

@@ -15,12 +15,22 @@ import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelSimpleInfo
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 class SimpleItemAdapter(
     val context: Activity,
     private var objectList: List<ModelSimpleInfo>,
     private val currentUser: String,
-    private val currentType: String
+    private val currentType: String,
+    private val url: String?,
+    private val username: String?,
+    private val pass: String?
 ) :
     RecyclerView.Adapter<SimpleItemAdapter.SimpleItemHolder>() {
 
@@ -99,7 +109,7 @@ class SimpleItemAdapter(
                         button.setOnClickListener {
                             if (nameET.text.toString().length in 1..40) {
                                 try {
-                                    val connection = DatabaseConnector().createConnection()
+                                    val connection = DatabaseConnector(url, username, pass).createConnection()
                                     val ifNameExist = connection.createStatement()
                                         .executeQuery("select * from ${currentType}s where name = '${nameET.text}' and deleted = '0'")
                                     if (ifNameExist.next()) {
@@ -145,9 +155,39 @@ class SimpleItemAdapter(
                                     }
                                     connection.close()
 
-                                } catch (e: SQLException) {
-                                    Log.e("MyApp", e.toString())
-                                    e.printStackTrace()
+                                } catch (e: Exception) {
+                                    val file = File(context.filesDir, "log_error")
+                                    if (!file.exists()) {
+                                        file.mkdir()
+                                    }
+                                    try {
+                                        val logfile = File(file, "log")
+                                        val timestamp = System.currentTimeMillis()
+                                        val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                                        val localTime = sdf.format(Date(timestamp))
+                                        val date = sdf.parse(localTime)!!
+                                        if (logfile.exists()) {
+                                            val fout = FileOutputStream(logfile, true)
+                                            val myOutWriter = OutputStreamWriter(fout)
+                                            myOutWriter.append("\n")
+                                            myOutWriter.append(date.toString())
+                                            myOutWriter.append("\n")
+                                            myOutWriter.append(e.toString())
+                                            myOutWriter.close()
+                                            fout.close()
+                                        }
+                                        else {
+                                            val writer = FileWriter(logfile)
+                                            writer.append(date.toString())
+                                            writer.append("\n")
+                                            writer.append(e.toString())
+                                            writer.flush()
+                                            writer.close()
+                                        }
+                                    }
+                                    catch (e: Exception) {
+
+                                    }
                                 }
                             } else {
                                 var genitiveTypeString = ""
@@ -171,7 +211,7 @@ class SimpleItemAdapter(
                     }
                     2 -> {
                         try {
-                            val connection = DatabaseConnector().createConnection()
+                            val connection = DatabaseConnector(url, username, pass).createConnection()
                             val idStmt = connection.createStatement()
                             val rs = idStmt.executeQuery(
                                 "select iduser from users where" +
@@ -201,9 +241,39 @@ class SimpleItemAdapter(
                                 .show()
                             connection.close()
                             refreshSimpleInfo()
-                        } catch (e: SQLException) {
-                            Log.e("MyApp", e.toString())
-                            e.printStackTrace()
+                        } catch (e: Exception) {
+                            val file = File(context.filesDir, "log_error")
+                            if (!file.exists()) {
+                                file.mkdir()
+                            }
+                            try {
+                                val logfile = File(file, "log")
+                                val timestamp = System.currentTimeMillis()
+                                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                                val localTime = sdf.format(Date(timestamp))
+                                val date = sdf.parse(localTime)!!
+                                if (logfile.exists()) {
+                                    val fout = FileOutputStream(logfile, true)
+                                    val myOutWriter = OutputStreamWriter(fout)
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(date.toString())
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(e.toString())
+                                    myOutWriter.close()
+                                    fout.close()
+                                }
+                                else {
+                                    val writer = FileWriter(logfile)
+                                    writer.append(date.toString())
+                                    writer.append("\n")
+                                    writer.append(e.toString())
+                                    writer.flush()
+                                    writer.close()
+                                }
+                            }
+                            catch (e: Exception) {
+
+                            }
                         }
                     }
                 }
@@ -215,7 +285,7 @@ class SimpleItemAdapter(
     fun refreshSimpleInfo() {
         val dataSet = mutableListOf<ModelSimpleInfo>()
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val rs = connection.createStatement()
                 .executeQuery("select * from ${currentType}s where deleted = '0'")
             while (rs.next()) {
@@ -234,9 +304,39 @@ class SimpleItemAdapter(
                 )
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         this.objectList = dataSet
         this.notifyDataSetChanged()

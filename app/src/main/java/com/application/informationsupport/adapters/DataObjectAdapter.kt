@@ -32,14 +32,17 @@ import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelDataObject
 import com.google.android.material.textfield.TextInputLayout
 import com.squareup.picasso.Picasso
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import java.io.*
+import java.text.SimpleDateFormat
 import java.util.*
 
 class DataObjectAdapter(
     val context: Activity,
     private var dataObjectList: List<ModelDataObject>,
-    private var currentUser: String
+    private var currentUser: String,
+    private val url: String?,
+    private val username: String?,
+    private val pass: String?
 ) : RecyclerView.Adapter<DataObjectAdapter.DataObjectHolder>() {
 
     private val CAMERA_REQUEST_CODE = 100
@@ -106,7 +109,7 @@ class DataObjectAdapter(
                     }
                     2 -> {
                         try {
-                            val connection = DatabaseConnector().createConnection()
+                            val connection = DatabaseConnector(url, username, pass).createConnection()
                             val idStmt = connection.createStatement()
                             val rs = idStmt.executeQuery(
                                 "select iduser from users where" +
@@ -122,9 +125,39 @@ class DataObjectAdapter(
                                 .executeQuery("update dataobjects set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where name = '${holder.nameTV.text}'")
                             connection.createStatement()
                                 .executeQuery("update recordvalues set changedby = '$creatorID', changeddate = SYSTIMESTAMP, deleted = '1' where dataobject = '$dataObjectID'")
-                        } catch (e: SQLException) {
-                            Log.e("MyApp", e.toString())
-                            e.printStackTrace()
+                        } catch (e: Exception) {
+                            val file = File(context.filesDir, "log_error")
+                            if (!file.exists()) {
+                                file.mkdir()
+                            }
+                            try {
+                                val logfile = File(file, "log")
+                                val timestamp = System.currentTimeMillis()
+                                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                                val localTime = sdf.format(Date(timestamp))
+                                val date = sdf.parse(localTime)!!
+                                if (logfile.exists()) {
+                                    val fout = FileOutputStream(logfile, true)
+                                    val myOutWriter = OutputStreamWriter(fout)
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(date.toString())
+                                    myOutWriter.append("\n")
+                                    myOutWriter.append(e.toString())
+                                    myOutWriter.close()
+                                    fout.close()
+                                }
+                                else {
+                                    val writer = FileWriter(logfile)
+                                    writer.append(date.toString())
+                                    writer.append("\n")
+                                    writer.append(e.toString())
+                                    writer.flush()
+                                    writer.close()
+                                }
+                            }
+                            catch (e: Exception) {
+
+                            }
                         }
                         Toast.makeText(context, "Объект удалён", Toast.LENGTH_SHORT).show()
                         refreshDataObjects()
@@ -138,7 +171,7 @@ class DataObjectAdapter(
     fun refreshDataObjects() {
         val dataSet = mutableListOf<ModelDataObject>()
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val rs = connection.createStatement()
                 .executeQuery("select * from dataobjects where deleted = '0'")
             while (rs.next()) {
@@ -164,9 +197,39 @@ class DataObjectAdapter(
                 )
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         this.dataObjectList = dataSet
         this.notifyDataSetChanged()
@@ -185,7 +248,7 @@ class DataObjectAdapter(
         val createButton = view.findViewById<Button>(R.id.createDataObjectButton)
         val branchData = mutableListOf<String>()
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             if (isEdit) {
                 changeTV.text = "Изменить объект данных"
                 nameET.text = SpannableStringBuilder(chosenDataObjectName)
@@ -215,9 +278,39 @@ class DataObjectAdapter(
                 currentUri = Uri.EMPTY
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
 
         branchSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -264,7 +357,7 @@ class DataObjectAdapter(
                 .inflate(R.layout.dialog_fill_form, null)
             val dataLL = fillFormView.findViewById<LinearLayout>(R.id.dataLL)
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 when {
                     formRecordList.isNotEmpty() -> {
                         formRecordList.forEach {
@@ -415,9 +508,39 @@ class DataObjectAdapter(
                     }
                 }
                 connection.close()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(context.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             val button = Button(context, null, 0, R.style.Widget_AppCompat_Button_Colored)
             button.text = "Заполнить"
@@ -487,7 +610,7 @@ class DataObjectAdapter(
                         bitmap.compress(Bitmap.CompressFormat.JPEG, 40, baos)
                         encodedImage = baos.toByteArray()
                     }
-                    val connection = DatabaseConnector().createConnection()
+                    val connection = DatabaseConnector(url, username, pass).createConnection()
                     val ifNameExistRS = connection.createStatement()
                         .executeQuery("select * from dataobjects where name = '${nameET.text}' and deleted = '0'")
                     if (ifNameExistRS.next()) {
@@ -628,8 +751,38 @@ class DataObjectAdapter(
         try {
             Picasso.get().load(currentUri).resize(200, 200).centerCrop().into(imageView)
         } catch (e: Exception) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
     }
 

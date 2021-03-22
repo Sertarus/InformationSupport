@@ -10,8 +10,16 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKeys
 import com.application.informationsupport.adapters.ObjectListAdapter
 import com.application.informationsupport.database.DatabaseConnector
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.schedule
 
@@ -25,8 +33,19 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            "informationSupport",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        val url = sharedPreferences.getString("URL", "")
+        val username = sharedPreferences.getString("username", "")
+        val pass = sharedPreferences.getString("pass", "")
         val adapter =
-            ObjectListAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, false)
+            ObjectListAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, false, url, username, pass)
         recyclerView = findViewById(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -62,8 +81,19 @@ class MainActivity : AppCompatActivity() {
         })
         val menu_hotlist = menu.findItem(R.id.menu_hotlist).actionView
         ui_hot = menu_hotlist.findViewById(R.id.hotlist_hot)
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            "informationSupport",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        val url = sharedPreferences.getString("URL", "")
+        val username = sharedPreferences.getString("username", "")
+        val pass = sharedPreferences.getString("pass", "")
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val serviceIDRS = connection.createStatement()
                 .executeQuery("select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'")
             serviceIDRS.next()
@@ -77,13 +107,43 @@ class MainActivity : AppCompatActivity() {
             eventNumber.next()
             updateHotCount(eventNumber.getInt("total"))
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(this.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         Timer("UpdateNotification", false).schedule(10000) {
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val serviceIDRS = connection.createStatement().executeQuery(
                     "select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'"
                 )
@@ -100,9 +160,39 @@ class MainActivity : AppCompatActivity() {
                 updateHotCount(eventNumber.getInt("total"))
                 connection.close()
                 invalidateOptionsMenu()
-            } catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            } catch (e: Exception) {
+                val file = File(this@MainActivity.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
         }
         menu_hotlist.setOnClickListener {
@@ -128,9 +218,20 @@ class MainActivity : AppCompatActivity() {
             newIntent.putExtra("role", intent.getStringExtra("role"))
             startActivity(newIntent)
         }
+        val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+        val sharedPreferences = EncryptedSharedPreferences.create(
+            "informationSupport",
+            masterKeyAlias,
+            this,
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
+        val url = sharedPreferences.getString("URL", "")
+        val username = sharedPreferences.getString("username", "")
+        val pass = sharedPreferences.getString("pass", "")
         if (id == R.id.action_logout) {
             try {
-                val connection = DatabaseConnector().createConnection()
+                val connection = DatabaseConnector(url, username, pass).createConnection()
                 val rs = connection.createStatement().executeQuery(
                     "select iduser from users where" +
                             " login = '${intent.getStringExtra("name")}'"
@@ -140,9 +241,39 @@ class MainActivity : AppCompatActivity() {
                 connection.createStatement().executeQuery("update log_user_info set changeddate = SYSTIMESTAMP, deleted = '1' where userid = '$creatorID' and deleted = '0'")
                 connection.close()
             }
-            catch (e: SQLException) {
-                Log.e("MyApp", e.toString())
-                e.printStackTrace()
+            catch (e: Exception) {
+                val file = File(this.filesDir, "log_error")
+                if (!file.exists()) {
+                    file.mkdir()
+                }
+                try {
+                    val logfile = File(file, "log")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
             }
             val intent = Intent(this, LoginActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)

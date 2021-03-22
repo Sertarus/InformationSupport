@@ -15,11 +15,21 @@ import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelMainUserInfo
+import java.io.File
+import java.io.FileOutputStream
+import java.io.FileWriter
+import java.io.OutputStreamWriter
+import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 class UserAdapter(
     val context: Activity,
     private var userList: List<ModelMainUserInfo>,
-    private val currentUser: String
+    private val currentUser: String,
+    private val url: String?,
+    private val username: String?,
+    private val pass: String?
 ) : RecyclerView.Adapter<UserAdapter.UserHolder>() {
 
     class UserHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -78,7 +88,7 @@ class UserAdapter(
                         }
                         2 -> {
                             try {
-                                val connection = DatabaseConnector().createConnection()
+                                val connection = DatabaseConnector(url, username, pass).createConnection()
                                 val idStmt = connection.createStatement()
                                 val rs = idStmt.executeQuery(
                                     "select iduser from users where" +
@@ -96,9 +106,39 @@ class UserAdapter(
                                     .show()
                                 connection.close()
                                 refreshUserInfo()
-                            } catch (e: SQLException) {
-                                Log.e("MyApp", e.toString())
-                                e.printStackTrace()
+                            } catch (e: Exception) {
+                                val file = File(context.filesDir, "log_error")
+                                if (!file.exists()) {
+                                    file.mkdir()
+                                }
+                                try {
+                                    val logfile = File(file, "log")
+                                    val timestamp = System.currentTimeMillis()
+                                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                                    val localTime = sdf.format(Date(timestamp))
+                                    val date = sdf.parse(localTime)!!
+                                    if (logfile.exists()) {
+                                        val fout = FileOutputStream(logfile, true)
+                                        val myOutWriter = OutputStreamWriter(fout)
+                                        myOutWriter.append("\n")
+                                        myOutWriter.append(date.toString())
+                                        myOutWriter.append("\n")
+                                        myOutWriter.append(e.toString())
+                                        myOutWriter.close()
+                                        fout.close()
+                                    }
+                                    else {
+                                        val writer = FileWriter(logfile)
+                                        writer.append(date.toString())
+                                        writer.append("\n")
+                                        writer.append(e.toString())
+                                        writer.flush()
+                                        writer.close()
+                                    }
+                                }
+                                catch (e: Exception) {
+
+                                }
                             }
                         }
                     }
@@ -111,7 +151,7 @@ class UserAdapter(
     fun refreshUserInfo() {
         val dataSet = mutableListOf<ModelMainUserInfo>()
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             val rs =
                 connection.createStatement().executeQuery("select * from users where deleted = '0'")
             while (rs.next()) {
@@ -143,9 +183,39 @@ class UserAdapter(
                 )
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
         this.userList = dataSet
         this.notifyDataSetChanged()
@@ -186,7 +256,7 @@ class UserAdapter(
         var currentDevice = ""
         var blocked = ""
         try {
-            val connection = DatabaseConnector().createConnection()
+            val connection = DatabaseConnector(url, username, pass).createConnection()
             if (isEdit) {
                 val infoStmt = connection.createStatement()
                 val infoRS =
@@ -242,9 +312,39 @@ class UserAdapter(
                 deviceData.add(deviceRS.getString("name"))
             }
             connection.close()
-        } catch (e: SQLException) {
-            Log.e("MyApp", e.toString())
-            e.printStackTrace()
+        } catch (e: Exception) {
+            val file = File(context.filesDir, "log_error")
+            if (!file.exists()) {
+                file.mkdir()
+            }
+            try {
+                val logfile = File(file, "log")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
         }
 
         val serviceSpinner = view.findViewById<Spinner>(R.id.spinnerService)
@@ -314,7 +414,7 @@ class UserAdapter(
                 }
                 else -> {
                     try {
-                        val connection = DatabaseConnector().createConnection()
+                        val connection = DatabaseConnector(url, username, pass).createConnection()
                         val ifUserExistRS = connection.createStatement()
                             .executeQuery("select * from users where login = '${loginET.text}' and deleted = '0'")
                         if (ifUserExistRS.next()) {
@@ -401,9 +501,39 @@ class UserAdapter(
                             }
                             connection.close()
                         }
-                    } catch (e: SQLException) {
-                        Log.e("MyApp", e.toString())
-                        e.printStackTrace()
+                    } catch (e: Exception) {
+                        val file = File(context.filesDir, "log_error")
+                        if (!file.exists()) {
+                            file.mkdir()
+                        }
+                        try {
+                            val logfile = File(file, "log")
+                            val timestamp = System.currentTimeMillis()
+                            val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                            val localTime = sdf.format(Date(timestamp))
+                            val date = sdf.parse(localTime)!!
+                            if (logfile.exists()) {
+                                val fout = FileOutputStream(logfile, true)
+                                val myOutWriter = OutputStreamWriter(fout)
+                                myOutWriter.append("\n")
+                                myOutWriter.append(date.toString())
+                                myOutWriter.append("\n")
+                                myOutWriter.append(e.toString())
+                                myOutWriter.close()
+                                fout.close()
+                            }
+                            else {
+                                val writer = FileWriter(logfile)
+                                writer.append(date.toString())
+                                writer.append("\n")
+                                writer.append(e.toString())
+                                writer.flush()
+                                writer.close()
+                            }
+                        }
+                        catch (e: Exception) {
+
+                        }
                     }
                 }
             }
