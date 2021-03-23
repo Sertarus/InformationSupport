@@ -502,7 +502,7 @@ class ObjectInfoActivity : AppCompatActivity() {
                     if (dataObjectRS.getString("changedby") != null && dataObjectRS.getString("changeddate") != null) {
                         val changedUserNameStmt = connection.createStatement()
                         val changedUserNameRS = changedUserNameStmt.executeQuery(
-                            "select login from users where iduser =" +
+                            "select login from users where deleted = '0' and iduser =" +
                                     " '${dataObjectRS.getString("changedby")}'"
                         )
                         changedUserNameRS.next()
@@ -530,11 +530,11 @@ class ObjectInfoActivity : AppCompatActivity() {
                     objectIV.visibility = View.VISIBLE
                 }
                 val idDataTypeRS = connection.createStatement()
-                    .executeQuery("select datatype from branches where idBranch in (select branch from dataobjects where name = '${title}')")
+                    .executeQuery("select datatype from branches where deleted = '0' and idBranch in (select branch from dataobjects where deleted = '0' and name = '${title}')")
                 idDataTypeRS.next()
                 val idDataType = idDataTypeRS.getString("datatype")
                 val idDataObjectRS = connection.createStatement()
-                    .executeQuery("select iddataobject from dataobjects where name = '$title'")
+                    .executeQuery("select iddataobject from dataobjects where name = '$title' and deleted = '0'")
                 idDataObjectRS.next()
                 val idDataObject = idDataObjectRS.getString("iddataobject")
                 val recordTypesRS = connection.createStatement()
