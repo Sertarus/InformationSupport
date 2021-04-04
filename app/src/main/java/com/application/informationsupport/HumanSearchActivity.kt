@@ -64,7 +64,7 @@ class HumanSearchActivity : AppCompatActivity() {
                 val currentUserService = currentUserInfoRS.getString("service")
                 val currentUserDistrict = currentUserInfoRS.getString("district")
                 val rs = connection.createStatement()
-                    .executeQuery("select * from dataobjects where deleted = '0' and iddataobject in (select dataobject from recordvalues where deleted = '0' and value like '%${searchET.text}%') and branch in (select branch from branches_services where deleted = '0' and service = '$currentUserService') and branch in (select branch from branches_districts where deleted = '0' and district = '$currentUserDistrict')")
+                    .executeQuery("select * from dataobjects where deleted = '0' and iddataobject in (select dataobject from recordvalues where deleted = '0' and lower(value) like '%${searchET.text.toString().toLowerCase()}%') and branch in (select branch from branches_services where deleted = '0' and service = '$currentUserService') and branch in (select branch from branches_districts where deleted = '0' and district = '$currentUserDistrict')")
                 while (rs.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
