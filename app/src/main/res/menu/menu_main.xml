@@ -2,22 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/action_admin"
-        android:title="Панель администратора"/>
-
     <item android:id="@+id/action_program"
         android:title="О программе"/>
 
     <item android:id="@+id/action_full_search"
-        android:title="Расширенный поиск"/>
+        android:title="Поиск"/>
 
     <item android:id="@+id/action_logout"
         android:title="Выход"/>
-
-    <item android:id="@+id/action_search"
-        android:title="Поиск"
-        app:showAsAction="always"
-        app:actionViewClass="androidx.appcompat.widget.SearchView" />
 
     <item android:id="@+id/menu_hotlist"
         app:actionLayout="@layout/action_bar_notification_icon"

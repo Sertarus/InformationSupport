@@ -3,12 +3,14 @@ package com.application.informationsupport.adapters
 import android.app.Activity
 import android.content.Intent
 import android.database.SQLException
+import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.application.informationsupport.ObjectInfoActivity
 import com.application.informationsupport.R
@@ -163,12 +165,8 @@ class ObjectListAdapter(
             }
             connection.close()
         } catch (e: Exception) {
-            val file = File(context.filesDir, "log_error")
-            if (!file.exists()) {
-                file.mkdir()
-            }
             try {
-                val logfile = File(file, "log")
+                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -180,6 +178,10 @@ class ObjectListAdapter(
                     myOutWriter.append(date.toString())
                     myOutWriter.append("\n")
                     myOutWriter.append(e.toString())
+                    e.stackTrace.forEach {
+                        myOutWriter.append("\n")
+                        myOutWriter.append(it.toString())
+                    }
                     myOutWriter.close()
                     fout.close()
                 }
@@ -188,6 +190,10 @@ class ObjectListAdapter(
                     writer.append(date.toString())
                     writer.append("\n")
                     writer.append(e.toString())
+                    e.stackTrace.forEach {
+                        writer.append("\n")
+                        writer.append(it.toString())
+                    }
                     writer.flush()
                     writer.close()
                 }
@@ -195,6 +201,7 @@ class ObjectListAdapter(
             catch (e: Exception) {
 
             }
+            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
         }
         this.objectList = dataSet
         this.notifyDataSetChanged()

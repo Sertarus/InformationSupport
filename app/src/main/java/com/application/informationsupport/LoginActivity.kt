@@ -3,6 +3,7 @@ package com.application.informationsupport
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import android.os.StrictMode
 import android.view.LayoutInflater
 import android.widget.Button
@@ -165,7 +166,7 @@ class LoginActivity : AppCompatActivity() {
                 val connection = DatabaseConnector(url, username, pass).createConnection()
                 val stmt = connection.createStatement()
                 val rs =
-                    stmt.executeQuery("select * from users where login = '" + login.text.toString() + "'")
+                    stmt.executeQuery("select * from user where login = '" + login.text.toString() + "'")
                 val isNotEmpty = rs.next()
                 if (isNotEmpty) {
                     rightPass = rs.getString("password")
@@ -197,12 +198,8 @@ class LoginActivity : AppCompatActivity() {
                 }
                 connection.close()
             } catch (e: Exception) {
-                val file = File(this.filesDir, "log_error")
-                if (!file.exists()) {
-                    file.mkdir()
-                }
                 try {
-                    val logfile = File(file, "log")
+                    val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -214,6 +211,10 @@ class LoginActivity : AppCompatActivity() {
                         myOutWriter.append(date.toString())
                         myOutWriter.append("\n")
                         myOutWriter.append(e.toString())
+                        e.stackTrace.forEach {
+                            myOutWriter.append("\n")
+                            myOutWriter.append(it.toString())
+                        }
                         myOutWriter.close()
                         fout.close()
                     }
@@ -222,6 +223,10 @@ class LoginActivity : AppCompatActivity() {
                         writer.append(date.toString())
                         writer.append("\n")
                         writer.append(e.toString())
+                        e.stackTrace.forEach {
+                            writer.append("\n")
+                            writer.append(it.toString())
+                        }
                         writer.flush()
                         writer.close()
                     }
@@ -229,6 +234,7 @@ class LoginActivity : AppCompatActivity() {
                 catch (e: Exception) {
 
                 }
+                Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
             }
         }
     }

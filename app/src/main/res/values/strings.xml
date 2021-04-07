@@ -70,4 +70,5 @@
     <string name="ftp_pass">Пароль пользователя FTP-сервера</string>
     <string name="descrpition">Описание</string>
     <string name="textForSearch">Текст для поиска</string>
+    <string name="search">Поиск</string>
 </resources>

@@ -3,10 +3,12 @@ package com.application.informationsupport
 import android.content.Intent
 import android.database.SQLException
 import android.os.Bundle
+import android.os.Environment
 import android.text.TextUtils
 import android.util.Log
 import android.view.*
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -56,30 +58,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.menu_main, menu)
-        val item = menu!!.findItem(R.id.action_search)
-        val searchView = item.actionView as androidx.appcompat.widget.SearchView
-        searchView.setOnQueryTextListener(object :
-            androidx.appcompat.widget.SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                if (!TextUtils.isEmpty(query!!.trim())) {
-                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList(query)
-                } else {
-                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
-                }
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                if (!TextUtils.isEmpty(newText!!.trim())) {
-                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList(newText)
-                } else {
-                    (recyclerView.adapter as ObjectListAdapter).refreshObjectList("")
-                }
-                return false
-            }
-
-        })
-        val menu_hotlist = menu.findItem(R.id.menu_hotlist).actionView
+        val menu_hotlist = menu!!.findItem(R.id.menu_hotlist).actionView
         ui_hot = menu_hotlist.findViewById(R.id.hotlist_hot)
         val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
         val sharedPreferences = EncryptedSharedPreferences.create(
@@ -108,12 +87,8 @@ class MainActivity : AppCompatActivity() {
             updateHotCount(eventNumber.getInt("total"))
             connection.close()
         } catch (e: Exception) {
-            val file = File(this.filesDir, "log_error")
-            if (!file.exists()) {
-                file.mkdir()
-            }
             try {
-                val logfile = File(file, "log")
+                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -125,6 +100,10 @@ class MainActivity : AppCompatActivity() {
                     myOutWriter.append(date.toString())
                     myOutWriter.append("\n")
                     myOutWriter.append(e.toString())
+                    e.stackTrace.forEach {
+                        myOutWriter.append("\n")
+                        myOutWriter.append(it.toString())
+                    }
                     myOutWriter.close()
                     fout.close()
                 }
@@ -133,6 +112,10 @@ class MainActivity : AppCompatActivity() {
                     writer.append(date.toString())
                     writer.append("\n")
                     writer.append(e.toString())
+                    e.stackTrace.forEach {
+                        writer.append("\n")
+                        writer.append(it.toString())
+                    }
                     writer.flush()
                     writer.close()
                 }
@@ -140,8 +123,9 @@ class MainActivity : AppCompatActivity() {
             catch (e: Exception) {
 
             }
+            Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
         }
-        Timer("UpdateNotification", false).schedule(10000) {
+        Timer("UpdateNotification", false).schedule(1000) {
             try {
                 val connection = DatabaseConnector(url, username, pass).createConnection()
                 val serviceIDRS = connection.createStatement().executeQuery(
@@ -161,12 +145,8 @@ class MainActivity : AppCompatActivity() {
                 connection.close()
                 invalidateOptionsMenu()
             } catch (e: Exception) {
-                val file = File(this@MainActivity.filesDir, "log_error")
-                if (!file.exists()) {
-                    file.mkdir()
-                }
                 try {
-                    val logfile = File(file, "log")
+                    val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -178,6 +158,10 @@ class MainActivity : AppCompatActivity() {
                         myOutWriter.append(date.toString())
                         myOutWriter.append("\n")
                         myOutWriter.append(e.toString())
+                        e.stackTrace.forEach {
+                            myOutWriter.append("\n")
+                            myOutWriter.append(it.toString())
+                        }
                         myOutWriter.close()
                         fout.close()
                     }
@@ -186,6 +170,10 @@ class MainActivity : AppCompatActivity() {
                         writer.append(date.toString())
                         writer.append("\n")
                         writer.append(e.toString())
+                        e.stackTrace.forEach {
+                            writer.append("\n")
+                            writer.append(it.toString())
+                        }
                         writer.flush()
                         writer.close()
                     }
@@ -193,6 +181,7 @@ class MainActivity : AppCompatActivity() {
                 catch (e: Exception) {
 
                 }
+                Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
             }
         }
         menu_hotlist.setOnClickListener {
@@ -203,21 +192,8 @@ class MainActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        val admin = menu!!.findItem(R.id.action_admin)
-        if (intent.getStringExtra("role") == "0") admin.isVisible = false
-        return super.onPrepareOptionsMenu(menu)
-    }
-
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-        if (id == R.id.action_admin) {
-            val newIntent = Intent(this, AdminActivity::class.java)
-            newIntent.putExtra("name", intent.getStringExtra("name"))
-            newIntent.putExtra("role", intent.getStringExtra("role"))
-            startActivity(newIntent)
-        }
         val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
         val sharedPreferences = EncryptedSharedPreferences.create(
             "informationSupport",
@@ -242,12 +218,8 @@ class MainActivity : AppCompatActivity() {
                 connection.close()
             }
             catch (e: Exception) {
-                val file = File(this.filesDir, "log_error")
-                if (!file.exists()) {
-                    file.mkdir()
-                }
                 try {
-                    val logfile = File(file, "log")
+                    val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -259,6 +231,10 @@ class MainActivity : AppCompatActivity() {
                         myOutWriter.append(date.toString())
                         myOutWriter.append("\n")
                         myOutWriter.append(e.toString())
+                        e.stackTrace.forEach {
+                            myOutWriter.append("\n")
+                            myOutWriter.append(it.toString())
+                        }
                         myOutWriter.close()
                         fout.close()
                     }
@@ -267,6 +243,10 @@ class MainActivity : AppCompatActivity() {
                         writer.append(date.toString())
                         writer.append("\n")
                         writer.append(e.toString())
+                        e.stackTrace.forEach {
+                            writer.append("\n")
+                            writer.append(it.toString())
+                        }
                         writer.flush()
                         writer.close()
                     }
@@ -274,6 +254,7 @@ class MainActivity : AppCompatActivity() {
                 catch (e: Exception) {
 
                 }
+                Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
             }
             val intent = Intent(this, LoginActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)

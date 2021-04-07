@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import org.apache.commons.net.ftp.FTP
@@ -66,7 +67,7 @@ class ProfileActivity : AppCompatActivity() {
                 }
             }
             catch (e: Exception) {
-                e.printStackTrace()
+                Toast.makeText(this, "Произошла ошибка", Toast.LENGTH_SHORT).show()
             }
         }
     }
