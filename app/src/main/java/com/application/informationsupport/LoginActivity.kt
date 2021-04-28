@@ -166,7 +166,7 @@ class LoginActivity : AppCompatActivity() {
                 val connection = DatabaseConnector(url, username, pass).createConnection()
                 val stmt = connection.createStatement()
                 val rs =
-                    stmt.executeQuery("select * from user where login = '" + login.text.toString() + "'")
+                    stmt.executeQuery("select * from users where login = '" + login.text.toString() + "'")
                 val isNotEmpty = rs.next()
                 if (isNotEmpty) {
                     rightPass = rs.getString("password")

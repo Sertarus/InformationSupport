@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
             }
             Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
         }
-        Timer("UpdateNotification", false).schedule(1000) {
+        Timer("UpdateNotification", false).schedule(20000) {
             try {
                 val connection = DatabaseConnector(url, username, pass).createConnection()
                 val serviceIDRS = connection.createStatement().executeQuery(
