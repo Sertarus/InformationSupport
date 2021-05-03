@@ -34,6 +34,7 @@ class HumanSearchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_human_search)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        title = "Поиск"
         val configuration = this.resources.configuration
         val locale = Locale("ru", "RU")
         configuration.setLocale(locale)

@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
             }
             Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
         }
-        Timer("UpdateNotification", false).schedule(20000) {
+        Timer("UpdateNotification", false).schedule(20000, 20000) {
             try {
                 val connection = DatabaseConnector(url, username, pass).createConnection()
                 val serviceIDRS = connection.createStatement().executeQuery(
@@ -267,6 +267,11 @@ class MainActivity : AppCompatActivity() {
         }
         if (id == R.id.action_full_search) {
             val newIntent = Intent(this, HumanSearchActivity::class.java)
+            newIntent.putExtra("name", intent.getStringExtra("name"))
+            startActivity(newIntent)
+        }
+        if (id == R.id.action_chat) {
+            val newIntent = Intent(this, ChatActivity::class.java)
             newIntent.putExtra("name", intent.getStringExtra("name"))
             startActivity(newIntent)
         }

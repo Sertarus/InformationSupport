@@ -9,6 +9,7 @@ import android.os.Environment
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -36,6 +37,7 @@ class ObjectInfoActivity : AppCompatActivity() {
         title = intent.getStringExtra("name")
         val informationTV = findViewById<TextView>(R.id.informationTV)
         val objectIV = findViewById<ImageView>(R.id.imageView)
+        val changeButton = findViewById<Button>(R.id.changeButton)
         objectIV.visibility = View.GONE
         val recyclerView = findViewById<RecyclerView>(R.id.dataItemRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -54,6 +56,7 @@ class ObjectInfoActivity : AppCompatActivity() {
         val pass = sharedPreferences.getString("pass", "")
         if (type == "dataobject") {
             informationTV.visibility = View.GONE
+            changeButton.visibility = View.VISIBLE
             try {
                 val connection = DatabaseConnector(url, username, pass).createConnection()
                 val dataObjectRS = connection.createStatement()
@@ -130,6 +133,9 @@ class ObjectInfoActivity : AppCompatActivity() {
 
                 }
                 Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+            }
+            changeButton.setOnClickListener {
+
             }
             recyclerView.adapter = DataItemAdapter(this, dataSet)
         }

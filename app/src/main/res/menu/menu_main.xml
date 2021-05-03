@@ -2,11 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item android:id="@+id/action_program"
-        android:title="О программе"/>
+    <item android:id="@+id/action_chat"
+        android:title="Чат"/>
 
     <item android:id="@+id/action_full_search"
         android:title="Поиск"/>
+
+    <item android:id="@+id/action_program"
+        android:title="О программе"/>
 
     <item android:id="@+id/action_logout"
         android:title="Выход"/>
