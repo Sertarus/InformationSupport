@@ -88,8 +88,8 @@ class ObjectListAdapter(
             } else {
                 val intent = Intent(context, ObjectInfoActivity::class.java)
                 intent.putExtra("name", name)
+                intent.putExtra("user", currentUser)
                 intent.putExtra("type", "dataobject")
-                intent.putExtra("isAdmin", false)
                 context.startActivity(intent)
             }
         }

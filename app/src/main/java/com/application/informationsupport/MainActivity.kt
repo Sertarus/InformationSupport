@@ -1,11 +1,8 @@
 package com.application.informationsupport
 
 import android.content.Intent
-import android.database.SQLException
 import android.os.Bundle
 import android.os.Environment
-import android.text.TextUtils
-import android.util.Log
 import android.view.*
 import android.widget.TextView
 import android.widget.Toast
