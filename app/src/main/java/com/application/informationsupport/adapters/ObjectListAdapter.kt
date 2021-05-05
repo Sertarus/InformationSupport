@@ -51,13 +51,13 @@ class ObjectListAdapter(
     }
 
     override fun getItemCount(): Int {
-        return if (context.title.toString() != "Информационное обеспечение" && (objectList.isEmpty() || objectList[0].name != "") && !isSearch) objectList.size +
+        return if (context.title.toString() != "Информационное обеспечение" && context.title.toString() != "Новая информация" && (objectList.isEmpty() || objectList[0].name != "") && !isSearch) objectList.size +
                 1 else objectList.size
     }
 
     override fun onBindViewHolder(holder: ObjectListHolder, position: Int) {
         val title = context.title.toString()
-        val notRootScreen = title != "Информационное обеспечение"
+        val notRootScreen = title != "Информационное обеспечение" && title != "Новая информация"
         if (notRootScreen && (objectList.isEmpty() || objectList[0].name != "") && !isSearch) {
             objectList.add(0, ModelObjectList("", "", "", false))
         }
@@ -162,6 +162,63 @@ class ObjectListAdapter(
                         )
                     )
                 }
+            }
+            connection.close()
+        } catch (e: Exception) {
+            try {
+                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                val timestamp = System.currentTimeMillis()
+                val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                val localTime = sdf.format(Date(timestamp))
+                val date = sdf.parse(localTime)!!
+                if (logfile.exists()) {
+                    val fout = FileOutputStream(logfile, true)
+                    val myOutWriter = OutputStreamWriter(fout)
+                    myOutWriter.append("\n")
+                    myOutWriter.append(date.toString())
+                    myOutWriter.append("\n")
+                    myOutWriter.append(e.toString())
+                    e.stackTrace.forEach {
+                        myOutWriter.append("\n")
+                        myOutWriter.append(it.toString())
+                    }
+                    myOutWriter.close()
+                    fout.close()
+                }
+                else {
+                    val writer = FileWriter(logfile)
+                    writer.append(date.toString())
+                    writer.append("\n")
+                    writer.append(e.toString())
+                    e.stackTrace.forEach {
+                        writer.append("\n")
+                        writer.append(it.toString())
+                    }
+                    writer.flush()
+                    writer.close()
+                }
+            }
+            catch (e: Exception) {
+
+            }
+            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
+        }
+        this.objectList = dataSet
+        this.notifyDataSetChanged()
+    }
+
+    fun refreshNewObjectList() {
+        val dataSet = mutableListOf<ModelObjectList>()
+        try {
+            val connection = DatabaseConnector(url, username, pass).createConnection()
+            val currentUserInfoRS = connection.createStatement()
+                .executeQuery("select * from users where login = '$currentUser'")
+            currentUserInfoRS.next()
+            val currentUserService = currentUserInfoRS.getString("service")
+            val currentUserDistrict = currentUserInfoRS.getString("district")
+            val rs = connection.createStatement().executeQuery("select name, branch, d.createdby, d.creationdate, u.login from dataobjects d left join users u on u.iduser = d.createdby where (extract (day from (SYSTIMESTAMP - d.creationdate)) < 1 or extract (day from (SYSTIMESTAMP - d.changeddate)) < 1) and d.deleted = 0 and branch in (select branch from branches_districts where district = $currentUserDistrict and deleted = 0) and branch in (select branch from branches_services where service = $currentUserService and deleted = 0) order by d.creationdate")
+            while (rs.next()) {
+                dataSet.add(ModelObjectList(rs.getString("name"), rs.getString("login"), rs.getString("creationdate").split(".")[0], false))
             }
             connection.close()
         } catch (e: Exception) {

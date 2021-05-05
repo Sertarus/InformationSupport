@@ -28,6 +28,8 @@ class MainActivity : AppCompatActivity() {
     lateinit var recyclerView: RecyclerView
     private var hot_number = 0
     private var ui_hot: TextView? = null
+    private var update_number = 0
+    private var ui_update: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +58,9 @@ class MainActivity : AppCompatActivity() {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.menu_main, menu)
         val menu_hotlist = menu!!.findItem(R.id.menu_hotlist).actionView
+        val menu_update = menu.findItem(R.id.menu_notifications).actionView
         ui_hot = menu_hotlist.findViewById(R.id.hotlist_hot)
+        ui_update = menu_update.findViewById(R.id.hotlist_hot)
         val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
         val sharedPreferences = EncryptedSharedPreferences.create(
             "informationSupport",
@@ -82,6 +86,9 @@ class MainActivity : AppCompatActivity() {
                 .executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
             eventNumber.next()
             updateHotCount(eventNumber.getInt("total"))
+            val updateNumber = connection.createStatement().executeQuery("select count(*) as total from dataobjects where (extract (day from (SYSTIMESTAMP - creationdate)) < 1 or extract (day from (SYSTIMESTAMP - changeddate)) < 1) and deleted = 0 and branch in (select branch from branches_districts where district = '$districtID' and deleted = 0) and branch in (select branch from branches_services where service = '$serviceID' and deleted = 0)")
+            updateNumber.next()
+            updateNewCount(updateNumber.getInt("total"))
             connection.close()
         } catch (e: Exception) {
             try {
@@ -120,7 +127,7 @@ class MainActivity : AppCompatActivity() {
             catch (e: Exception) {
 
             }
-            Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
         }
         Timer("UpdateNotification", false).schedule(20000, 20000) {
             try {
@@ -139,6 +146,9 @@ class MainActivity : AppCompatActivity() {
                     .executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
                 eventNumber.next()
                 updateHotCount(eventNumber.getInt("total"))
+                val updateNumber = connection.createStatement().executeQuery("select count(*) as total from dataobjects where (extract (day from (SYSTIMESTAMP - creationdate)) < 1 or extract (day from (SYSTIMESTAMP - changeddate)) < 1) and deleted = 0 and branch in (select branch from branches_districts where district = $districtID) and branch in (select branch from branches_services where service = $serviceID)")
+                updateNumber.next()
+                updateNewCount(updateNumber.getInt("total"))
                 connection.close()
                 invalidateOptionsMenu()
             } catch (e: Exception) {
@@ -178,11 +188,18 @@ class MainActivity : AppCompatActivity() {
                 catch (e: Exception) {
 
                 }
-                Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
         menu_hotlist.setOnClickListener {
             val newIntent = Intent(this, EventActivity::class.java)
+            newIntent.putExtra("name", intent.getStringExtra("name")!!)
+            this.startActivity(newIntent)
+        }
+        menu_update.setOnClickListener {
+            val newIntent = Intent(this, NewObjectActivity::class.java)
             newIntent.putExtra("name", intent.getStringExtra("name")!!)
             this.startActivity(newIntent)
         }
@@ -282,6 +299,17 @@ class MainActivity : AppCompatActivity() {
             if (new_hot_number == 0) ui_hot!!.visibility = View.INVISIBLE else {
                 ui_hot!!.visibility = View.VISIBLE
                 ui_hot!!.text = hot_number.toString()
+            }
+        }
+    }
+
+    private fun updateNewCount(new_update_number: Int) {
+        update_number = new_update_number
+        if (ui_update == null) return
+        runOnUiThread {
+            if (new_update_number == 0) ui_update!!.visibility = View.INVISIBLE else {
+                ui_update!!.visibility = View.VISIBLE
+                ui_update!!.text = update_number.toString()
             }
         }
     }
