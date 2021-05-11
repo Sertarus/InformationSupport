@@ -3,7 +3,10 @@ package com.application.informationsupport
 import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
-import android.view.*
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -17,7 +20,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.OutputStreamWriter
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.schedule
@@ -26,10 +28,12 @@ import kotlin.concurrent.schedule
 class MainActivity : AppCompatActivity() {
 
     lateinit var recyclerView: RecyclerView
+    lateinit var timer: Timer
     private var hot_number = 0
     private var ui_hot: TextView? = null
     private var update_number = 0
     private var ui_update: TextView? = null
+    private var timer_active = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +50,15 @@ class MainActivity : AppCompatActivity() {
         val username = sharedPreferences.getString("username", "")
         val pass = sharedPreferences.getString("pass", "")
         val adapter =
-            ObjectListAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, false, url, username, pass)
+            ObjectListAdapter(
+                this,
+                mutableListOf(),
+                intent.getStringExtra("name")!!,
+                false,
+                url,
+                username,
+                pass
+            )
         recyclerView = findViewById(R.id.dataRecyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = LinearLayoutManager(this)
@@ -92,7 +104,10 @@ class MainActivity : AppCompatActivity() {
             connection.close()
         } catch (e: Exception) {
             try {
-                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                val logfile = File(
+                    Environment.getExternalStorageDirectory().absolutePath,
+                    "log.txt"
+                )
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -129,67 +144,73 @@ class MainActivity : AppCompatActivity() {
             }
                 Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
         }
-        Timer("UpdateNotification", false).schedule(20000, 20000) {
-            try {
-                val connection = DatabaseConnector(url, username, pass).createConnection()
-                val serviceIDRS = connection.createStatement().executeQuery(
-                    "select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'"
-                )
-                serviceIDRS.next()
-                val serviceID = serviceIDRS.getString("service")
-                val districtIDRS = connection.createStatement().executeQuery(
-                    "select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'"
-                )
-                districtIDRS.next()
-                val districtID = districtIDRS.getString("district")
-                val eventNumber = connection.createStatement()
-                    .executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
-                eventNumber.next()
-                updateHotCount(eventNumber.getInt("total"))
-                val updateNumber = connection.createStatement().executeQuery("select count(*) as total from dataobjects where (extract (day from (SYSTIMESTAMP - creationdate)) < 1 or extract (day from (SYSTIMESTAMP - changeddate)) < 1) and deleted = 0 and branch in (select branch from branches_districts where district = $districtID) and branch in (select branch from branches_services where service = $serviceID)")
-                updateNumber.next()
-                updateNewCount(updateNumber.getInt("total"))
-                connection.close()
-                invalidateOptionsMenu()
-            } catch (e: Exception) {
+        timer = Timer("UpdateNotification", true)
+        timer.schedule(20000, 20000) {
+            if (timer_active) {
                 try {
-                    val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
-                    val timestamp = System.currentTimeMillis()
-                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
-                    val localTime = sdf.format(Date(timestamp))
-                    val date = sdf.parse(localTime)!!
-                    if (logfile.exists()) {
-                        val fout = FileOutputStream(logfile, true)
-                        val myOutWriter = OutputStreamWriter(fout)
-                        myOutWriter.append("\n")
-                        myOutWriter.append(date.toString())
-                        myOutWriter.append("\n")
-                        myOutWriter.append(e.toString())
-                        e.stackTrace.forEach {
+                    val connection = DatabaseConnector(url, username, pass).createConnection()
+                    val serviceIDRS = connection.createStatement().executeQuery(
+                        "select service from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'"
+                    )
+                    serviceIDRS.next()
+                    val serviceID = serviceIDRS.getString("service")
+                    val districtIDRS = connection.createStatement().executeQuery(
+                        "select district from users where login = '${intent.getStringExtra("name")!!}' and deleted = '0'"
+                    )
+                    districtIDRS.next()
+                    val districtID = districtIDRS.getString("district")
+                    val eventNumber = connection.createStatement()
+                        .executeQuery("select count(*) as total from events where CAST(systimestamp AS TIMESTAMP) between timestart and timeend and idevent in (select event from events_services where service = '$serviceID' and deleted = '0') and  idevent in (select event from events_districts where district = '$districtID' and deleted = '0') and deleted = '0'")
+                    eventNumber.next()
+                    updateHotCount(eventNumber.getInt("total"))
+                    val updateNumber = connection.createStatement()
+                        .executeQuery("select count(*) as total from dataobjects where (extract (day from (SYSTIMESTAMP - creationdate)) < 1 or extract (day from (SYSTIMESTAMP - changeddate)) < 1) and deleted = 0 and branch in (select branch from branches_districts where district = $districtID) and branch in (select branch from branches_services where service = $serviceID)")
+                    updateNumber.next()
+                    updateNewCount(updateNumber.getInt("total"))
+                    connection.close()
+                    Thread.sleep(500)
+                    invalidateOptionsMenu()
+                } catch (e: Exception) {
+                    try {
+                        val logfile = File(
+                            Environment.getExternalStorageDirectory().absolutePath,
+                            "log.txt"
+                        )
+                        val timestamp = System.currentTimeMillis()
+                        val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                        val localTime = sdf.format(Date(timestamp))
+                        val date = sdf.parse(localTime)!!
+                        if (logfile.exists()) {
+                            val fout = FileOutputStream(logfile, true)
+                            val myOutWriter = OutputStreamWriter(fout)
                             myOutWriter.append("\n")
-                            myOutWriter.append(it.toString())
-                        }
-                        myOutWriter.close()
-                        fout.close()
-                    }
-                    else {
-                        val writer = FileWriter(logfile)
-                        writer.append(date.toString())
-                        writer.append("\n")
-                        writer.append(e.toString())
-                        e.stackTrace.forEach {
+                            myOutWriter.append(date.toString())
+                            myOutWriter.append("\n")
+                            myOutWriter.append(e.toString())
+                            e.stackTrace.forEach {
+                                myOutWriter.append("\n")
+                                myOutWriter.append(it.toString())
+                            }
+                            myOutWriter.close()
+                            fout.close()
+                        } else {
+                            val writer = FileWriter(logfile)
+                            writer.append(date.toString())
                             writer.append("\n")
-                            writer.append(it.toString())
+                            writer.append(e.toString())
+                            e.stackTrace.forEach {
+                                writer.append("\n")
+                                writer.append(it.toString())
+                            }
+                            writer.flush()
+                            writer.close()
                         }
-                        writer.flush()
-                        writer.close()
-                    }
-                }
-                catch (e: Exception) {
+                    } catch (e: Exception) {
 
-                }
-                runOnUiThread {
-                    Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, e.message, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -233,7 +254,10 @@ class MainActivity : AppCompatActivity() {
             }
             catch (e: Exception) {
                 try {
-                    val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                    val logfile = File(
+                        Environment.getExternalStorageDirectory().absolutePath,
+                        "log.txt"
+                    )
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -280,7 +304,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(newIntent)
         }
         if (id == R.id.action_full_search) {
-            val newIntent = Intent(this, HumanSearchActivity::class.java)
+            val newIntent = Intent(this, SearchActivity::class.java)
             newIntent.putExtra("name", intent.getStringExtra("name"))
             startActivity(newIntent)
         }
@@ -312,6 +336,16 @@ class MainActivity : AppCompatActivity() {
                 ui_update!!.text = update_number.toString()
             }
         }
+    }
+
+    override fun onPause() {
+        timer_active = false
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        timer_active = true
     }
 
 }

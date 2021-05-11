@@ -26,7 +26,7 @@ import java.sql.SQLException
 import java.text.SimpleDateFormat
 import java.util.*
 
-class HumanSearchActivity : AppCompatActivity() {
+class SearchActivity : AppCompatActivity() {
 
     lateinit var recyclerView: RecyclerView
 
