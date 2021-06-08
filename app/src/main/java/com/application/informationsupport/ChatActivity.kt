@@ -6,12 +6,9 @@ import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
-import android.os.Message
 import android.provider.MediaStore
 import android.text.TextUtils
 import android.view.MenuItem
@@ -19,17 +16,17 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.application.informationsupport.adapters.ChatAdapter
 import com.application.informationsupport.database.DatabaseConnector
-import com.application.informationsupport.models.ModelChat
 import java.io.*
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.schedule
@@ -44,7 +41,10 @@ class ChatActivity : AppCompatActivity() {
     protected lateinit var storagePermissions: Array<String>
     protected lateinit var cameraPermissions: Array<String>
     protected lateinit var adapter: ChatAdapter
-    var messageSent = false
+    protected lateinit var recyclerView: RecyclerView
+    lateinit var url : String
+    lateinit var username : String
+    lateinit var pass : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,9 +62,9 @@ class ChatActivity : AppCompatActivity() {
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
-        val url = sharedPreferences.getString("URL", "")
-        val username = sharedPreferences.getString("username", "")
-        val pass = sharedPreferences.getString("pass", "")
+        url = sharedPreferences.getString("URL", "").toString()
+        username = sharedPreferences.getString("username", "").toString()
+        pass = sharedPreferences.getString("pass", "").toString()
         cameraPermissions = arrayOf(
             Manifest.permission.CAMERA,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -72,9 +72,10 @@ class ChatActivity : AppCompatActivity() {
         storagePermissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         val linearLayoutManager = LinearLayoutManager(this)
         linearLayoutManager.stackFromEnd = true
-        val recyclerView = findViewById<RecyclerView>(R.id.chat_recyclerView)
+        recyclerView = findViewById<RecyclerView>(R.id.chat_recyclerView)
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = linearLayoutManager
+        (recyclerView.itemAnimator as SimpleItemAnimator).supportsChangeAnimations = false
         attachButton.setOnClickListener {
             showImagePicDialog()
         }
@@ -89,19 +90,19 @@ class ChatActivity : AppCompatActivity() {
                 sendMessage(message, image_uri)
             }
             messageET.setText("")
-            messageSent = true
         }
-        adapter = ChatAdapter(this, mutableListOf(), intent.getStringExtra("name")!!, url, username, pass)
+        adapter = ChatAdapter(
+            this,
+            mutableListOf(),
+            intent.getStringExtra("name")!!,
+            url,
+            username,
+            pass
+        )
         recyclerView.adapter = adapter
-        adapter.updateChat()
+        adapter.loadChat()
         Timer("UpdateChat", false).schedule(5000, 5000) {
-            this@ChatActivity.runOnUiThread{
                 adapter.updateChat()
-                if (messageSent) {
-                    recyclerView.scrollToPosition(adapter.chatList.size - 1)
-                    messageSent = false
-                }
-            }
         }
     }
 
@@ -151,7 +152,10 @@ class ChatActivity : AppCompatActivity() {
         }
         catch (e: Exception) {
             try {
-                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                val logfile = File(
+                    Environment.getExternalStorageDirectory().absolutePath,
+                    "log.txt"
+                )
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -188,6 +192,16 @@ class ChatActivity : AppCompatActivity() {
             }
             Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
         }
+        adapter.updateChat()
+        Thread {
+            try {
+                Thread.sleep(800)
+            } catch (e: InterruptedException) {
+                e.printStackTrace()
+            }
+            runOnUiThread {recyclerView.smoothScrollToPosition(recyclerView.adapter!!.itemCount - 1)}
+        }.start()
+
     }
 
     private fun showImagePicDialog() {

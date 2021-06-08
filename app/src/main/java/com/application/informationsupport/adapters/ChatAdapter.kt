@@ -9,6 +9,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.graphics.*
+import android.os.AsyncTask
 import android.os.Environment
 import android.view.LayoutInflater
 import android.view.View
@@ -19,7 +20,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.application.informationsupport.ChatActivity
 import com.application.informationsupport.R
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelChat
@@ -28,10 +31,11 @@ import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.OutputStreamWriter
 import java.lang.Exception
+import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*
 
-class ChatAdapter (val context: Context, val chatList: MutableList<ModelChat>, val currentName: String,
+class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, val currentName: String,
                    private val url: String?,
                    private val username: String?,
                    private val pass: String?) : RecyclerView.Adapter<ChatAdapter.MyHolder>() {
@@ -95,6 +99,7 @@ class ChatAdapter (val context: Context, val chatList: MutableList<ModelChat>, v
                 builder.setPositiveButton("Да", object : DialogInterface.OnClickListener {
                     override fun onClick(dialog: DialogInterface?, which: Int) {
                         deleteMessage(chatList[position].id)
+                        updateChat()
                     }
 
                 })
@@ -163,8 +168,7 @@ class ChatAdapter (val context: Context, val chatList: MutableList<ModelChat>, v
         }
     }
 
-    fun updateChat() {
-        chatList.clear()
+    fun loadChat() {
         try {
             val connection = DatabaseConnector(url, username, pass).createConnection()
             val userRS = connection.createStatement().executeQuery("select * from users where login = '$currentName'")
@@ -227,6 +231,11 @@ class ChatAdapter (val context: Context, val chatList: MutableList<ModelChat>, v
                 Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    fun updateChat() {
+        val task = UpdateTask(context as ChatActivity, this)
+        task.execute()
     }
 
     private fun zoomImageFromThumb(thumbView: View, imageBitmap: Bitmap) {
@@ -357,5 +366,114 @@ class ChatAdapter (val context: Context, val chatList: MutableList<ModelChat>, v
     companion object {
         const val MESSAGE_TYPE_LEFT = 0
         const val MESSAGE_TYPE_RIGHT = 1
+    }
+
+    class ChatDiffUtilCallback(oldList: List<ModelChat>, newList: List<ModelChat>) :
+        DiffUtil.Callback() {
+        private val oldList: List<ModelChat>
+        private val newList: List<ModelChat>
+
+        override fun getOldListSize(): Int {
+            return oldList.size
+        }
+
+        override fun getNewListSize(): Int {
+            return newList.size
+        }
+
+
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val oldMessage: ModelChat = oldList[oldItemPosition]
+            val newMessage: ModelChat = newList[newItemPosition]
+            return oldMessage.id == newMessage.id
+        }
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val oldMessage: ModelChat = oldList[oldItemPosition]
+            val newMessage: ModelChat = newList[newItemPosition]
+            return (oldMessage.sender.equals(newMessage.sender)
+                    && oldMessage.timeStamp === newMessage.timeStamp)
+        }
+
+        init {
+            this.oldList = oldList
+            this.newList = newList
+        }
+    }
+
+    class UpdateTask (context: ChatActivity, adapter: ChatAdapter) : AsyncTask<Void, Void, Void>() {
+
+        var activityReference: WeakReference<ChatActivity> = WeakReference(context)
+        var adapterReference: WeakReference<ChatAdapter> = WeakReference(adapter)
+
+        override fun doInBackground(vararg params: Void?): Void? {
+            val activity = activityReference.get()
+            val currentAdapter = adapterReference.get()
+            if (activity == null || activity.isFinishing) return null
+            val newList = mutableListOf<ModelChat>()
+            try {
+                val connection = DatabaseConnector(activity.url, activity.username, activity.pass).createConnection()
+                val userRS = connection.createStatement().executeQuery("select * from users where login = '${currentAdapter?.currentName}'")
+                userRS.next()
+                val chatlistRS = connection.createStatement().executeQuery("select * from messages where deleted = 0 and createdby in (select iduser from users where service = ${userRS.getString("service")} and district = ${userRS.getString("district")}) order by creationdate")
+                while (chatlistRS.next()) {
+                    val createdLogRS = connection.createStatement().executeQuery("select login from users where iduser = ${chatlistRS.getString("createdby")}")
+                    createdLogRS.next()
+                    val createdLog = createdLogRS.getString("login")
+                    val image = chatlistRS.getBlob("image")
+                    var scaledBitmap: Bitmap? = null
+                    if (image != null) {
+                        val bytes = image.getBytes(1L, image.length().toInt())
+                        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        scaledBitmap = Bitmap.createScaledBitmap(bitmap, 250, 250, false)
+                    }
+                    newList.add(ModelChat(chatlistRS.getString("text"), createdLog, chatlistRS.getString("creationdate").split(".")[0], scaledBitmap, chatlistRS.getInt("idmessage")))
+                }
+                val chatDiffUtilCallback = ChatDiffUtilCallback(currentAdapter!!.chatList, newList)
+                val result = DiffUtil.calculateDiff(chatDiffUtilCallback)
+                currentAdapter.chatList = newList
+                result.dispatchUpdatesTo(currentAdapter)
+                connection.close()
+            }
+            catch (e: Exception) {
+                try {
+                    val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                    val timestamp = System.currentTimeMillis()
+                    val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
+                    val localTime = sdf.format(Date(timestamp))
+                    val date = sdf.parse(localTime)!!
+                    if (logfile.exists()) {
+                        val fout = FileOutputStream(logfile, true)
+                        val myOutWriter = OutputStreamWriter(fout)
+                        myOutWriter.append("\n")
+                        myOutWriter.append(date.toString())
+                        myOutWriter.append("\n")
+                        myOutWriter.append(e.toString())
+                        e.stackTrace.forEach {
+                            myOutWriter.append("\n")
+                            myOutWriter.append(it.toString())
+                        }
+                        myOutWriter.close()
+                        fout.close()
+                    }
+                    else {
+                        val writer = FileWriter(logfile)
+                        writer.append(date.toString())
+                        writer.append("\n")
+                        writer.append(e.toString())
+                        e.stackTrace.forEach {
+                            writer.append("\n")
+                            writer.append(it.toString())
+                        }
+                        writer.flush()
+                        writer.close()
+                    }
+                }
+                catch (e: Exception) {
+
+                }
+            }
+            return null
+        }
     }
 }
