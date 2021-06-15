@@ -188,6 +188,7 @@ class LoginActivity : AppCompatActivity() {
                         )
                         rs.next()
                         val creatorID = rs.getString("iduser")
+                        connection.createStatement().executeQuery("update log_user_info set deleted = 1, changeddate = SYSTIMESTAMP where userid = $creatorID")
                         connection.createStatement().executeQuery("insert into log_user_info (userid, creationdate) values ('$creatorID', SYSTIMESTAMP)")
                         val intent = Intent(this, MainActivity::class.java)
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
