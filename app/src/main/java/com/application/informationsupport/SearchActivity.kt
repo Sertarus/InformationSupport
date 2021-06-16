@@ -1,6 +1,8 @@
 package com.application.informationsupport
 
 import android.app.DatePickerDialog
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
@@ -75,13 +77,18 @@ class SearchActivity : AppCompatActivity() {
                     )
                     nameSet.next()
                     val name = nameSet.getString("login")
+                    val image = rs.getBlob("image")
+                    var bitmap: Bitmap? = null
+                    if (image != null) {
+                        val bytes = image.getBytes(1L, image.length().toInt())
+                        bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    }
                     dataSet.add(
                         ModelObjectList(
                             rs.getString("name"),
                             name,
-                            rs.getString("creationdate").split(".")[0]
+                            rs.getString("creationdate").split(".")[0], false, bitmap)
                         )
-                    )
                 }
                 connection.close()
             } catch (e: Exception) {

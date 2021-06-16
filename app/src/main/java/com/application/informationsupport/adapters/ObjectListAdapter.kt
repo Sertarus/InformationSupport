@@ -3,6 +3,8 @@ package com.application.informationsupport.adapters
 import android.app.Activity
 import android.content.Intent
 import android.database.SQLException
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Environment
 import android.util.Log
 import android.view.LayoutInflater
@@ -21,6 +23,7 @@ import java.io.FileOutputStream
 import java.io.FileWriter
 import java.io.OutputStreamWriter
 import java.lang.Exception
+import java.sql.Blob
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -59,18 +62,26 @@ class ObjectListAdapter(
         val title = context.title.toString()
         val notRootScreen = title != "Информационное обеспечение" && title != "Новая информация"
         if (notRootScreen && (objectList.isEmpty() || objectList[0].name != "") && !isSearch) {
-            objectList.add(0, ModelObjectList("", "", "", false))
+            objectList.add(0, ModelObjectList("", "", "", false, null))
         }
         val name = objectList[position].name
         val creator = objectList[position].creator
         val date = objectList[position].date
         val isFolder = objectList[position].isFolder
+        val image = objectList[position].image
 
         holder.nameTV.text = name
         holder.creatorTV.text = creator
         holder.dateTV.text = date
         if (isFolder) holder.typeIV.setImageResource(R.drawable.ic_folder)
-        else if ((position != 0 || !notRootScreen) || isSearch) holder.typeIV.setImageResource(R.drawable.ic_object)
+        else if ((position != 0 || !notRootScreen) || isSearch) {
+            if (image == null) {
+                holder.typeIV.setImageResource(R.drawable.ic_object)
+            }
+            else {
+                holder.typeIV.setImageBitmap(Bitmap.createScaledBitmap(image, 200, 200, false))
+            }
+        }
         else holder.typeIV.setImageResource(R.drawable.ic_arrow_back)
 
         holder.itemView.setOnClickListener {
@@ -120,7 +131,7 @@ class ObjectListAdapter(
                             branchRS.getString("name"),
                             creatorName,
                             branchRS.getString("creationdate").split(".")[0],
-                            true
+                            true, null
                         )
                     )
                 }
@@ -140,12 +151,12 @@ class ObjectListAdapter(
                             branchRS.getString("name"),
                             creatorName,
                             branchRS.getString("creationdate").split(".")[0],
-                            true
+                            true, null
                         )
                     )
                 }
                 val dataObjectRS = connection.createStatement()
-                    .executeQuery("select name, createdby, creationdate from dataobjects where branch in (select idbranch from branches where name = '${context.title}') and deleted = '0'  and name like '%$text%'")
+                    .executeQuery("select name, createdby, creationdate, image from dataobjects where branch in (select idbranch from branches where name = '${context.title}') and deleted = '0'  and name like '%$text%'")
                 while (dataObjectRS.next()) {
                     val newStmt = connection.createStatement()
                     val nameSet = newStmt.executeQuery(
@@ -154,13 +165,18 @@ class ObjectListAdapter(
                     )
                     nameSet.next()
                     val creatorName = nameSet.getString("login")
+                    val image = dataObjectRS.getBlob("image")
+                    var bitmap: Bitmap? = null
+                    if (image != null) {
+                        val bytes = image.getBytes(1L, image.length().toInt())
+                        bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    }
                     dataSet.add(
                         ModelObjectList(
                             dataObjectRS.getString("name"),
                             creatorName,
-                            dataObjectRS.getString("creationdate").split(".")[0]
+                            dataObjectRS.getString("creationdate").split(".")[0], false, bitmap)
                         )
-                    )
                 }
             }
             connection.close()
@@ -216,9 +232,15 @@ class ObjectListAdapter(
             currentUserInfoRS.next()
             val currentUserService = currentUserInfoRS.getString("service")
             val currentUserDistrict = currentUserInfoRS.getString("district")
-            val rs = connection.createStatement().executeQuery("select name, branch, d.createdby, d.creationdate, u.login from dataobjects d left join users u on u.iduser = d.createdby where (extract (day from (SYSTIMESTAMP - d.creationdate)) < 1 or extract (day from (SYSTIMESTAMP - d.changeddate)) < 1) and d.deleted = 0 and branch in (select branch from branches_districts where district = $currentUserDistrict and deleted = 0) and branch in (select branch from branches_services where service = $currentUserService and deleted = 0) order by d.creationdate")
+            val rs = connection.createStatement().executeQuery("select name, branch, image, d.createdby, d.creationdate, u.login from dataobjects d left join users u on u.iduser = d.createdby where (extract (day from (SYSTIMESTAMP - d.creationdate)) < 1 or extract (day from (SYSTIMESTAMP - d.changeddate)) < 1) and d.deleted = 0 and branch in (select branch from branches_districts where district = $currentUserDistrict and deleted = 0) and branch in (select branch from branches_services where service = $currentUserService and deleted = 0) order by d.creationdate")
+            val image = rs.getBlob("image")
+            var bitmap: Bitmap? = null
+            if (image != null) {
+                val bytes = image.getBytes(1L, image.length().toInt())
+                bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            }
             while (rs.next()) {
-                dataSet.add(ModelObjectList(rs.getString("name"), rs.getString("login"), rs.getString("creationdate").split(".")[0], false))
+                dataSet.add(ModelObjectList(rs.getString("name"), rs.getString("login"), rs.getString("creationdate").split(".")[0], false, bitmap))
             }
             connection.close()
         } catch (e: Exception) {

@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKeys
 import com.application.informationsupport.adapters.DataItemAdapter
+import com.application.informationsupport.adapters.ImageAdapter
 import com.application.informationsupport.database.DatabaseConnector
 import com.application.informationsupport.models.ModelDataItem
 import com.google.android.material.textfield.TextInputLayout
@@ -59,9 +60,10 @@ class ObjectInfoActivity : AppCompatActivity() {
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
         title = intent.getStringExtra("name")
         val informationTV = findViewById<TextView>(R.id.informationTV)
-        val objectIV = findViewById<AppCompatImageView>(R.id.imageView)
+        val imageRecyclerView = findViewById<RecyclerView>(R.id.ImageRecyclerView)
+        imageRecyclerView.layoutManager = LinearLayoutManager(this)
+        val imageSet = mutableListOf<Bitmap>()
         val changeButton = findViewById<Button>(R.id.changeButton)
-        objectIV.visibility = View.GONE
         cameraPermissions = arrayOf(
             Manifest.permission.CAMERA,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -95,8 +97,15 @@ class ObjectInfoActivity : AppCompatActivity() {
                 if (image != null) {
                     val bytes = image.getBytes(1L, image.length().toInt())
                     val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    objectIV.setImageBitmap(Bitmap.createScaledBitmap(bitmap, 250, 250, false))
-                    objectIV.visibility = View.VISIBLE
+                    imageSet.add(bitmap)
+                    val oldImagesRS = connection.createStatement().executeQuery("select image, creationdate from old_images where dataobject in (select iddataobject from dataobjects where name = '${intent.getStringExtra("name")}' and deleted = 0) and deleted = 0 order by creationdate desc")
+                    while (oldImagesRS.next()) {
+                        val oldImage = oldImagesRS.getBlob("image")
+                        val oldBytes = oldImage.getBytes(1L, oldImage.length().toInt())
+                        val oldBitmap = BitmapFactory.decodeByteArray(oldBytes, 0, oldBytes.size)
+                        imageSet.add(oldBitmap)
+                    }
+                    imageRecyclerView.adapter = ImageAdapter(this, imageSet)
                 }
                 val idDataTypeRS = connection.createStatement()
                     .executeQuery("select datatype from branches where deleted = '0' and idBranch in (select branch from dataobjects where deleted = '0' and name = '${title}')")
