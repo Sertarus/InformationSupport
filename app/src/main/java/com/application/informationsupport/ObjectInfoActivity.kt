@@ -137,7 +137,7 @@ class ObjectInfoActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 try {
                     val logfile =
-                        File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                        File(this.filesDir, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -194,12 +194,8 @@ class ObjectInfoActivity : AppCompatActivity() {
                     }
                     connection.close()
                 } catch (e: Exception) {
-                    val file = File(filesDir, "log_error")
-                    if (!file.exists()) {
-                        file.mkdir()
-                    }
+                    val logfile = File(this.filesDir, "log.txt")
                     try {
-                        val logfile = File(file, "log")
                         val timestamp = System.currentTimeMillis()
                         val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                         val localTime = sdf.format(Date(timestamp))
@@ -298,12 +294,8 @@ class ObjectInfoActivity : AppCompatActivity() {
                         }
                         connection.close()
                     } catch (e: Exception) {
-                        val file = File(filesDir, "log_error")
-                        if (!file.exists()) {
-                            file.mkdir()
-                        }
+                        val logfile = File(filesDir, "log.txt")
                         try {
-                            val logfile = File(file, "log")
                             val timestamp = System.currentTimeMillis()
                             val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                             val localTime = sdf.format(Date(timestamp))
@@ -451,7 +443,7 @@ class ObjectInfoActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 try {
                     val logfile =
-                        File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                        File(this.filesDir, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))

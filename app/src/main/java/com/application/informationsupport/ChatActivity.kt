@@ -152,10 +152,7 @@ class ChatActivity : AppCompatActivity() {
         }
         catch (e: Exception) {
             try {
-                val logfile = File(
-                    Environment.getExternalStorageDirectory().absolutePath,
-                    "log.txt"
-                )
+                val logfile = File(this.filesDir, "log.txt")
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -171,6 +168,7 @@ class ChatActivity : AppCompatActivity() {
                         myOutWriter.append("\n")
                         myOutWriter.append(it.toString())
                     }
+                    myOutWriter.append("\n")
                     myOutWriter.close()
                     fout.close()
                 }
@@ -183,6 +181,7 @@ class ChatActivity : AppCompatActivity() {
                         writer.append("\n")
                         writer.append(it.toString())
                     }
+                    writer.append("\n")
                     writer.flush()
                     writer.close()
                 }
@@ -195,7 +194,7 @@ class ChatActivity : AppCompatActivity() {
         adapter.updateChat()
         Thread {
             try {
-                Thread.sleep(800)
+                Thread.sleep(2000)
             } catch (e: InterruptedException) {
                 e.printStackTrace()
             }

@@ -135,12 +135,8 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
                 .show()
             connection.close()
         } catch (e: Exception) {
-            val file = File(context.filesDir, "log_error")
-            if (!file.exists()) {
-                file.mkdir()
-            }
             try {
-                val logfile = File(file, "log")
+                val logfile = File(context.filesDir, "log.txt")
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -152,13 +148,24 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
                     myOutWriter.append(date.toString())
                     myOutWriter.append("\n")
                     myOutWriter.append(e.toString())
+                    e.stackTrace.forEach {
+                        myOutWriter.append("\n")
+                        myOutWriter.append(it.toString())
+                    }
+                    myOutWriter.append("\n")
                     myOutWriter.close()
                     fout.close()
-                } else {
+                }
+                else {
                     val writer = FileWriter(logfile)
                     writer.append(date.toString())
                     writer.append("\n")
                     writer.append(e.toString())
+                    e.stackTrace.forEach {
+                        writer.append("\n")
+                        writer.append(it.toString())
+                    }
+                    writer.append("\n")
                     writer.flush()
                     writer.close()
                 }
@@ -192,7 +199,7 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
         }
         catch (e: Exception) {
             try {
-                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                val logfile = File(context.filesDir, "log.txt")
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -208,6 +215,7 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
                         myOutWriter.append("\n")
                         myOutWriter.append(it.toString())
                     }
+                    myOutWriter.append("\n")
                     myOutWriter.close()
                     fout.close()
                 }
@@ -220,6 +228,7 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
                         writer.append("\n")
                         writer.append(it.toString())
                     }
+                    writer.append("\n")
                     writer.flush()
                     writer.close()
                 }
@@ -437,7 +446,7 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
             }
             catch (e: Exception) {
                 try {
-                    val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                    val logfile = File(activity.filesDir, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -453,6 +462,7 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
                             myOutWriter.append("\n")
                             myOutWriter.append(it.toString())
                         }
+                        myOutWriter.append("\n")
                         myOutWriter.close()
                         fout.close()
                     }
@@ -465,6 +475,7 @@ class ChatAdapter (val context: Context, var chatList: MutableList<ModelChat>, v
                             writer.append("\n")
                             writer.append(it.toString())
                         }
+                        writer.append("\n")
                         writer.flush()
                         writer.close()
                     }

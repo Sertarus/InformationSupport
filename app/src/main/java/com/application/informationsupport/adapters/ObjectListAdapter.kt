@@ -182,7 +182,7 @@ class ObjectListAdapter(
             connection.close()
         } catch (e: Exception) {
             try {
-                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                val logfile = File(context.filesDir, "log.txt")
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -198,6 +198,7 @@ class ObjectListAdapter(
                         myOutWriter.append("\n")
                         myOutWriter.append(it.toString())
                     }
+                    myOutWriter.append("\n")
                     myOutWriter.close()
                     fout.close()
                 }
@@ -210,6 +211,7 @@ class ObjectListAdapter(
                         writer.append("\n")
                         writer.append(it.toString())
                     }
+                    writer.append("\n")
                     writer.flush()
                     writer.close()
                 }
@@ -245,7 +247,7 @@ class ObjectListAdapter(
             connection.close()
         } catch (e: Exception) {
             try {
-                val logfile = File(Environment.getExternalStorageDirectory().absolutePath, "log.txt")
+                val logfile = File(context.filesDir, "log.txt")
                 val timestamp = System.currentTimeMillis()
                 val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                 val localTime = sdf.format(Date(timestamp))
@@ -261,6 +263,7 @@ class ObjectListAdapter(
                         myOutWriter.append("\n")
                         myOutWriter.append(it.toString())
                     }
+                    myOutWriter.append("\n")
                     myOutWriter.close()
                     fout.close()
                 }
@@ -273,6 +276,7 @@ class ObjectListAdapter(
                         writer.append("\n")
                         writer.append(it.toString())
                     }
+                    writer.append("\n")
                     writer.flush()
                     writer.close()
                 }

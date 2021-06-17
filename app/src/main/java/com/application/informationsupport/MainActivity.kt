@@ -186,10 +186,7 @@ class MainActivity : AppCompatActivity() {
                 return Pair(hot, update)
             } catch (e: Exception) {
                 try {
-                    val logfile = File(
-                        Environment.getExternalStorageDirectory().absolutePath,
-                        "log.txt"
-                    )
+                    val logfile = File(activity.filesDir, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -205,6 +202,7 @@ class MainActivity : AppCompatActivity() {
                             myOutWriter.append("\n")
                             myOutWriter.append(it.toString())
                         }
+                        myOutWriter.append("\n")
                         myOutWriter.close()
                         fout.close()
                     }
@@ -217,6 +215,7 @@ class MainActivity : AppCompatActivity() {
                             writer.append("\n")
                             writer.append(it.toString())
                         }
+                        writer.append("\n")
                         writer.flush()
                         writer.close()
                     }
@@ -261,10 +260,7 @@ class MainActivity : AppCompatActivity() {
             }
             catch (e: Exception) {
                 try {
-                    val logfile = File(
-                        Environment.getExternalStorageDirectory().absolutePath,
-                        "log.txt"
-                    )
+                    val logfile = File(activity.filesDir, "log.txt")
                     val timestamp = System.currentTimeMillis()
                     val sdf = SimpleDateFormat("dd/MM/yyyy hh:mm:ss", Locale.ROOT);
                     val localTime = sdf.format(Date(timestamp))
@@ -280,6 +276,7 @@ class MainActivity : AppCompatActivity() {
                             myOutWriter.append("\n")
                             myOutWriter.append(it.toString())
                         }
+                        myOutWriter.append("\n")
                         myOutWriter.close()
                         fout.close()
                     }
@@ -292,6 +289,7 @@ class MainActivity : AppCompatActivity() {
                             writer.append("\n")
                             writer.append(it.toString())
                         }
+                        writer.append("\n")
                         writer.flush()
                         writer.close()
                     }

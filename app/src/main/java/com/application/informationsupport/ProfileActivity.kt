@@ -50,17 +50,14 @@ class ProfileActivity : AppCompatActivity() {
                 if (con.login(sharedPreferences.getString("ftp_username", ""), sharedPreferences.getString("ftp_pass", ""))) {
                     con.enterLocalPassiveMode()
                     con.setFileType(FTP.BINARY_FILE_TYPE)
-                    val fileDir = File(this.filesDir, "log_error")
-                    if (fileDir.exists()) {
-                        val logFile = File(fileDir, "log")
-                        if (logFile.exists()) {
-                            val input = FileInputStream(logFile)
+                    val file = File(this.filesDir, "log.txt")
+                    if (file.exists()) {
+                            val input = FileInputStream(file)
                             val timestamp = System.currentTimeMillis()
                             val sdf = SimpleDateFormat("dd-MM-yyyy_HH-mm-ss", Locale.ROOT);
                             val localTime = sdf.format(Date(timestamp))
-                            con.storeFile("/log_" + userName + "_" + localTime, input)
+                            con.storeFile("/log_" + userName + "_" + localTime + ".txt", input)
                             input.close()
-                        }
                     }
                     con.logout()
                     con.disconnect()
