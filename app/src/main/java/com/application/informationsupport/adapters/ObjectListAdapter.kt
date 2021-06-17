@@ -233,13 +233,13 @@ class ObjectListAdapter(
             val currentUserService = currentUserInfoRS.getString("service")
             val currentUserDistrict = currentUserInfoRS.getString("district")
             val rs = connection.createStatement().executeQuery("select name, branch, image, d.createdby, d.creationdate, u.login from dataobjects d left join users u on u.iduser = d.createdby where (extract (day from (SYSTIMESTAMP - d.creationdate)) < 1 or extract (day from (SYSTIMESTAMP - d.changeddate)) < 1) and d.deleted = 0 and branch in (select branch from branches_districts where district = $currentUserDistrict and deleted = 0) and branch in (select branch from branches_services where service = $currentUserService and deleted = 0) order by d.creationdate")
-            val image = rs.getBlob("image")
-            var bitmap: Bitmap? = null
-            if (image != null) {
-                val bytes = image.getBytes(1L, image.length().toInt())
-                bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            }
             while (rs.next()) {
+                val image = rs.getBlob("image")
+                var bitmap: Bitmap? = null
+                if (image != null) {
+                    val bytes = image.getBytes(1L, image.length().toInt())
+                    bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                }
                 dataSet.add(ModelObjectList(rs.getString("name"), rs.getString("login"), rs.getString("creationdate").split(".")[0], false, bitmap))
             }
             connection.close()
